@@ -1,0 +1,83 @@
+---
+title: "<Chapter NN · Title>"
+description: "<One sentence: the concept — and what it lets you say to your agent.>"
+sidebar:
+  order: NN
+---
+
+{/*
+  CONCEPT-CHAPTER TEMPLATE (Parts II–IV) — copy this file to start a chapter.
+  The 8 sections below are fixed: no additions, no omissions, this order.
+  Pattern chapters (Part III) extend §2–3 with: Desired design features →
+  Before → After → Generic model (Mermaid classDiagram), and add a
+  "Choosing between X and Y" subsection when the chapter pairs patterns.
+  MDX components (<AICollab>, <VocabTable>, <PromptCard>, <TryIt>) are created
+  alongside Chapter 10 — until then, the placeholders show intent.
+*/}
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## The Itch
+
+{/* A short, concrete pain scenario — from checkout-lite or an everyday dev
+    task (files, configs, orders, notifications). Domain-neutral. The reader
+    should recognize the pain before hearing the concept's name. */}
+
+## The Concept
+
+{/* Definition in plain words, then a Mermaid diagram (classDiagram for
+    structure; max ~7 nodes). Introduce the canonical name explicitly —
+    the name IS the payload. */}
+
+## Before / After
+
+{/* Python 3.10+, full type hints, runnable, ≤40 lines per block.
+    Use Tabs: the tangle → the design. */}
+
+<Tabs>
+  <TabItem label="Before">
+    {/* the tangle */}
+  </TabItem>
+  <TabItem label="After">
+    {/* the design */}
+  </TabItem>
+</Tabs>
+
+## Pythonic Notes
+
+{/* How Python's features change the classical form: first-class functions,
+    Protocols, dataclasses, match, generators. When the lightweight form
+    beats the classical class-based form — and when it doesn't. */}
+
+## When NOT to Use
+
+<Aside type="caution" title="Right-sizing">
+  {/* The over-application failure mode, with a counter-example.
+      Every principle/pattern gets its counterweight — no exceptions. */}
+</Aside>
+
+## 🤖 AI Collaboration
+
+{/* 6a. Vocabulary table — "You say / The agent hears" */}
+
+| You say | The agent hears |
+|---|---|
+| "<phrase>" | <structural intent it activates> |
+
+{/* 6b. Prompt templates — 2–4 copy-paste prompts: context + constraint +
+    vocabulary + scope. Include at least one negative constraint
+    ("no new dependencies", "don't touch the public API"). Agent-neutral. */}
+
+{/* 6c. Review checklist — what to verify in agent output, as checkboxes. */}
+
+{/* 6d. Agent failure modes — known over/mis-applications of this concept. */}
+
+## Try It With Your Agent
+
+{/* Hands-on exercise: starter file + a prompt to run + grade the result
+    against the review checklist above. */}
+
+## Key Takeaways
+
+{/* 3–5 bullets. End with: glossary terms this chapter added (must match the
+    rows added to glossary.yaml in this same change set). */}

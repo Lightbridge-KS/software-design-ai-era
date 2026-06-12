@@ -1,0 +1,29 @@
+# ============================================================================
+# The Design Glossary-Phrasebook — single source of truth for Appendix A
+# ============================================================================
+# Every chapter adds its vocabulary here in the same change set that adds the
+# chapter prose. Appendix A renders from this file; never edit Appendix A's
+# term list by hand.
+#
+# Schema per entry (the 4 phrasebook fields + metadata):
+#
+#   - term: Strategy pattern                  # canonical name, as an agent knows it
+#     chapter: 10                             # chapter that introduces it
+#     definition: >                           # 1. what the term means
+#       Encapsulate a family of interchangeable algorithms behind a common
+#       interface, and inject the chosen one.
+#     why_it_matters: >                       # 2. the design force it addresses
+#       Isolates the part that varies, so adding a variant never risks the
+#       existing ones (Open-Closed Principle).
+#     prompt_phrasing: >                      # 3. exact words that invoke it
+#       "Refactor this if/elif chain to the Strategy pattern using functions
+#       as strategies and a registry dict. Keep the public signature unchanged."
+#     anti_phrase: >                          # 4. counter-instruction against
+#       "Use plain functions in a dict —     #    over-application
+#       no abstract base class unless strategies carry state. If there are
+#       only two stable branches, keep the if."
+#
+# Keep entries in chapter order. `term` must be unique.
+# ============================================================================
+
+terms: []
