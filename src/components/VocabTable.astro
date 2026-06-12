@@ -1,0 +1,23 @@
+---
+// The "You say / The agent hears" vocabulary table.
+// Usage: wrap a plain markdown table; this adds consistent styling only.
+---
+
+<div class="vocab-table">
+  <slot />
+</div>
+
+<style>
+  .vocab-table :global(table) {
+    width: 100%;
+    display: table;
+  }
+  .vocab-table :global(th:first-child),
+  .vocab-table :global(td:first-child) {
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .vocab-table :global(td:first-child) {
+    color: var(--sl-color-accent-high);
+  }
+</style>

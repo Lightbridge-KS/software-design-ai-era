@@ -1,0 +1,32 @@
+---
+// The hands-on exercise block: starter file + prompt + grading checklist.
+interface Props {
+  starter?: string; // repo path to the starter file
+}
+const { starter } = Astro.props;
+---
+
+<aside class="try-it">
+  <p class="try-it-title">🧪 Try It With Your Agent</p>
+  {starter && <p class="starter">Starter file: <code>{starter}</code></p>}
+  <slot />
+</aside>
+
+<style>
+  .try-it {
+    margin: 1rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px dashed var(--sl-color-gray-3);
+    border-radius: 0.5rem;
+  }
+  .try-it-title {
+    margin: 0;
+    font-weight: 700;
+    color: var(--sl-color-accent-high);
+  }
+  .starter {
+    margin-top: 0.25rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-2);
+  }
+</style>

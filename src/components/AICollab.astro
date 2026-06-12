@@ -1,0 +1,23 @@
+---
+// Wrapper for the 🤖 AI Collaboration section of each chapter.
+// Keep the `## 🤖 AI Collaboration` markdown heading OUTSIDE this component
+// so it appears in the page table of contents; this wrapper only provides
+// the distinct visual treatment.
+---
+
+<section class="ai-collab">
+  <slot />
+</section>
+
+<style>
+  .ai-collab {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--sl-color-accent);
+    border-radius: 0.5rem;
+    background: var(--sl-color-accent-low);
+  }
+  .ai-collab :global(h3:first-child) {
+    margin-top: 0.25rem;
+  }
+</style>

@@ -26,4 +26,78 @@
 # Keep entries in chapter order. `term` must be unique.
 # ============================================================================
 
-terms: []
+terms:
+  - term: Strategy pattern
+    chapter: 10
+    definition: >
+      Encapsulate each variant of an algorithm behind a common interface and
+      inject the chosen one; the caller is told what to use, not how to choose.
+    why_it_matters: >
+      Isolates the part that varies, so adding a variant never edits — or
+      risks — existing variants or the code that uses them (Open-Closed).
+    prompt_phrasing: >
+      "Refactor this if/elif chain to the Strategy pattern. Keep the public
+      signature unchanged."
+    anti_phrase: >
+      "Use functions as strategies — no ABC unless a strategy carries state.
+      If there are only two stable branches, keep the if."
+
+  - term: functions as strategies
+    chapter: 10
+    definition: >
+      The Pythonic form of Strategy: each variant is a plain function (or
+      closure) matching a Callable type alias, no class hierarchy.
+    why_it_matters: >
+      First-class functions make the classical ceremony unnecessary; closures
+      carry configuration the way a constructor would.
+    prompt_phrasing: >
+      "Use functions as strategies with a Callable type alias. Do not
+      introduce classes."
+    anti_phrase: >
+      "If a strategy accumulates state or needs multiple methods, promote
+      that one to a class — not the rest."
+
+  - term: registry (dispatch) dict
+    chapter: 10
+    definition: >
+      A dict mapping keys to strategies — the single place where "which
+      variants exist" is recorded.
+    why_it_matters: >
+      Makes the set of variants data instead of control flow; adding one is
+      one function plus one entry, with callers untouched.
+    prompt_phrasing: >
+      "Put the strategies in a registry dict; keep the dispatch table closed
+      for modification."
+    anti_phrase: >
+      "The dict IS the registry — no plugin loader, no config file, no
+      auto-discovery."
+
+  - term: Template Method pattern
+    chapter: 10
+    definition: >
+      Fix an algorithm's skeleton in a base-class method; subclasses supply
+      the varying steps but never the order of steps.
+    why_it_matters: >
+      Makes step-sequence duplication impossible — the invariant is owned by
+      code the variants don't write. One of the few honest uses of inheritance.
+    prompt_phrasing: >
+      "Apply the Template Method pattern: one ABC owning the skeleton method;
+      subclasses override the steps only."
+    anti_phrase: >
+      "Only if a second variant exists today — a skeleton with one subclass
+      is dead weight. When unsure, prefer Strategy and composition."
+
+  - term: hook method
+    chapter: 10
+    definition: >
+      A step in a Template Method skeleton with a sensible default
+      implementation; overriding it is optional, not required.
+    why_it_matters: >
+      Lets subclasses opt in to variation without forcing every format to
+      restate the common case.
+    prompt_phrasing: >
+      "Make footer a hook with a default; only header and line_items are
+      abstract."
+    anti_phrase: >
+      "No speculative hooks — add an override point when the second variant
+      asks for it, not before."

@@ -4,6 +4,9 @@ import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 
 export default defineConfig({
+  markdown: {
+    gfm: true,
+  },
   integrations: [
     starlight({
       title: 'Software Design for Programmers & AI Coding Agents',

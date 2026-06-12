@@ -4,3 +4,5 @@ dist/
 .astro/
 .netlify/
 _playground/
+__pycache__/
+.pytest_cache/

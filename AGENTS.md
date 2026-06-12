@@ -55,8 +55,11 @@ These were decided by the editor — do not relitigate without being asked:
 ## Code Rules
 
 - Python 3.10+, full type hints, runnable.
-- No example longer than ~40 lines in prose (longer code → companion examples repo).
-- Before/After/Pythonic variants in Starlight `<Tabs>`.
+- Keep prose examples short (~40 lines as a soft target; longer code → companion
+  examples repo) — but never split one coherent design across multiple tabs to meet
+  the limit. The reader should scroll one block, not click between halves of an idea.
+- Before/After/Pythonic variants in Starlight `<Tabs>` — tabs separate *alternatives*,
+  not parts of the same listing.
 
 ## Diagram Rules
 
