@@ -90,3 +90,6 @@ These were decided by the editor — do not relitigate without being asked:
   phase, move to one-chapter-per-branch/PR once drafting begins.
 - The finished Chapter 10 is the gold-standard exemplar for the template; consult it
   when drafting later chapters.
+- **Read `docs/STYLE-SAMPLES.md` before drafting any prose** — editor-approved
+  excerpts from Chapters 9–10 with the voice's moves annotated. Imitate the moves,
+  not the sentences.
