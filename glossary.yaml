@@ -27,6 +27,96 @@
 # ============================================================================
 
 terms:
+  - term: YAGNI
+    chapter: 9
+    definition: >
+      "You Aren't Gonna Need It" — build for today's requirement, not for
+      imagined futures. Targets speculation, never evidence.
+    why_it_matters: >
+      Imagined futures are usually wrong in direction; an abstraction built
+      for the wrong axis of change actively resists the change that arrives.
+    prompt_phrasing: >
+      "YAGNI — don't build that yet. Today's requirement only; list tempting
+      flexibility under 'Deferred' instead of building it."
+    anti_phrase: >
+      "Tests, clear names, and module boundaries are never YAGNI — and don't
+      delete a seam we have evidence for."
+
+  - term: KISS
+    chapter: 9
+    definition: >
+      "Keep It Simple" — among designs that satisfy today's requirement,
+      prefer the one with the fewest concepts a reader must hold.
+    why_it_matters: >
+      Every moving part is a comprehension tax on every future reader,
+      including your agent in its next session.
+    prompt_phrasing: >
+      "Keep it simple: the direct implementation, fewest moving parts."
+    anti_phrase: >
+      "Simple means fewest concepts, not least structure — an 800-line
+      script with no functions is not simple."
+
+  - term: premature abstraction
+    chapter: 9
+    definition: >
+      An interface, factory, or layer introduced before a second concrete
+      case exists — structure for a variation that is still a guess.
+    why_it_matters: >
+      The wrong abstraction costs more than duplication: it must be unwound
+      before the real variation can be served.
+    prompt_phrasing: >
+      "No premature abstraction: no interface, factory, or layer until at
+      least two concrete cases exist today."
+    anti_phrase: >
+      "When the change-log shows repeated requests on one axis, the seam is
+      evidence-based — build it."
+
+  - term: right-sizing
+    chapter: 9
+    definition: >
+      Matching the amount of structure to the code's evidence: its lifespan,
+      audience, and demonstrated axes of change.
+    why_it_matters: >
+      Agents default to maximum structure; humans drown reviewing it. The
+      size declaration is the single highest-leverage line in a prompt.
+    prompt_phrasing: >
+      "Right-size this for a script / an internal tool / a production
+      service."
+    anti_phrase: >
+      "Right-sizing cuts both ways — under-engineering hides complexity
+      instead of removing it."
+
+  - term: three tiers (Simple/Modular/Full)
+    chapter: 9
+    definition: >
+      A sizing vocabulary for codebase structure. Simple — one module,
+      functions and dataclasses. Modular — one package, core/infra/api,
+      dependencies inward. Full — domain/application/adapters with a
+      composition root.
+    why_it_matters: >
+      Compresses a whole structural budget into one word; most
+      over-engineering disputes are undeclared disagreements about tier.
+    prompt_phrasing: >
+      "Start at the Simple tier." / "This project is Modular tier — see the
+      conventions file."
+    anti_phrase: >
+      "Start Simple and promote on evidence; never scaffold a tier above
+      what today's codebase has earned."
+
+  - term: pass-through layer
+    chapter: 9
+    definition: >
+      A class or module whose methods only forward calls to the layer
+      below, adding no behavior, translation, or protection.
+    why_it_matters: >
+      It taxes every reader and every change with one more hop while
+      providing nothing — the purest form of accidental complexity.
+    prompt_phrasing: >
+      "Inline this layer — let callers talk to the real thing."
+    anti_phrase: >
+      "A layer that translates types, enforces a contract, or isolates a
+      third-party API is not a pass-through — keep it."
+
   - term: Strategy pattern
     chapter: 10
     definition: >
