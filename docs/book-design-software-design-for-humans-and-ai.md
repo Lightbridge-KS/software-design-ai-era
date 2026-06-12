@@ -77,10 +77,12 @@ Parts II–IV give the reader the language; Part V teaches them to *speak* it fl
 
 **Chapter 2 · The Two Enemies: Change and Complexity**
 - 2.1 All design serves one goal: keeping software *soft* (cheap to change)
-- 2.2 Complexity: essential vs. accidental
-- 2.3 Coupling and cohesion — the two master metrics (intuition first, formalism in Part II)
-- 2.4 Change leaks: how one edit ripples through a badly coupled codebase
-- 2.5 A worked disaster: a small reporting script grows into a tangle
+- 2.2 Complexity: essential vs. accidental (Brooks) · **Ousterhout as named pillar** (*A Philosophy of Software Design*): complexity = "anything related to the structure of a software system that makes it hard to understand and modify the system"; understanding is the binding constraint
+- 2.3 Ousterhout's three symptoms — **change amplification, cognitive load, unknown unknowns** — taught as *review vocabulary* (questions you can ask an agent verbatim: "does this diff amplify change?")
+- 2.4 Coupling and cohesion — the two master metrics (intuition first, formalism in Part II)
+- 2.5 Change leaks: how one edit ripples through a badly coupled codebase · complexity is *incremental* (Ousterhout's zero-tolerance argument; pairs with Ch 1's "unmade decisions accrete")
+- 2.6 A worked disaster: a small reporting script grows into a tangle
+- 2.7 Tactical vs. strategic programming (Ousterhout), AI-twisted: an unconstrained agent is the ultimate tactical programmer — strategy must come from you
 - 🤖 *AI Collaboration:* agents amplify whatever structure exists — good or bad ("garbage in, garbage at scale")
 
 **Chapter 3 · The Design Loop with an AI Partner**
@@ -104,7 +106,7 @@ Parts II–IV give the reader the language; Part V teaches them to *speak* it fl
 - 🤖 vocabulary: *"loose coupling," "Law of Demeter violation," "tell, don't ask," "invert this dependency"*
 
 **Chapter 6 · Encapsulation and Information Hiding**
-- Public surface vs. private implementation · properties vs. getters/setters (Pythonic) · dangerous setters · "but is it really hidden?" (Python's consenting-adults convention)
+- Public surface vs. private implementation · properties vs. getters/setters (Pythonic) · dangerous setters · "but is it really hidden?" (Python's consenting-adults convention) · information-hiding lineage: Parnas → Ousterhout, with a preview of **deep modules** (value = functionality behind the interface ÷ cost of the interface; full treatment in Ch 16)
 - 🤖 vocabulary: *"hide the implementation," "narrow the public API," "make this immutable"*
 
 **Chapter 7 · No Surprises: Least Astonishment and Contracts**
@@ -136,6 +138,7 @@ Each pattern chapter follows the standard template (§4 below). Patterns are gro
 **Chapter 12 · Integrating and Simplifying: Adapter and Façade**
 - Adapter: making third-party code fit your interface (`Protocol` shines here)
 - Façade: one friendly door to a messy subsystem
+- Both reframed through Ousterhout: a Façade is precisely a **depth-adding move** (simple interface over powerful functionality); an Adapter that adds no depth is a pass-through layer wearing a pattern name (ties back to Ch 9's warning-sign catalog)
 - These two are the *most useful patterns for AI-era codebases* — agents constantly glue libraries together
 
 **Chapter 13 · Reacting to Change: Observer and State**
@@ -158,6 +161,8 @@ Each pattern chapter follows the standard template (§4 below). Patterns are gro
 
 **Chapter 16 · Modules and Packages as Design Units**
 - A module is a cohesion boundary · public API via `__init__.py` and `__all__` · import hygiene (no circular imports, no deep reach-ins) · god modules · naming the layers of a package
+- **Deep vs. shallow modules (Ousterhout) as the chapter's organizing metric**: a deep module offers much functionality behind a simple interface; a shallow one's interface costs as much as its implementation · glossary rows: *deep module*, *shallow module*
+- The AI-era addition this book can own: **deep modules are token-efficient** — an agent can use one from its interface alone, without reading the implementation; shallow modules force every reader, human or agent, to page everything in. Depth was always good design; context windows made it measurable
 
 **Chapter 17 · Dependency Direction and the Three Tiers**
 - The dependency rule at codebase scale (stable things shouldn't depend on volatile things) · Simple tier (single module, functions) · Modular tier (`core/`, `infra/`, `api/`, constructor injection at boundaries) · Full tier (domain → application → adapters, composition root) · evolving *between* tiers as a project grows

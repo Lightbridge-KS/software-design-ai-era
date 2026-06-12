@@ -27,6 +27,23 @@
 # ============================================================================
 
 terms:
+  - term: design vocabulary
+    chapter: 1
+    definition: >
+      The shared names for structures — patterns, principles, smells — that
+      compress an entire design intent into a phrase both humans and agents
+      can act on.
+    why_it_matters: >
+      It is a protocol: one precise phrase fixes the contract of a change,
+      turning review from discovery into verification. It works because
+      agents trained on the same decades of literature share the codebook.
+    prompt_phrasing: >
+      "Refactor to [pattern], using [the form you want]. Keep the public
+      signature unchanged. Do not introduce [the failure mode you fear]."
+    anti_phrase: >
+      "A pattern name is a hypothesis, not a command — pair every term with
+      its right-sizing constraint, and review for fit."
+
   - term: YAGNI
     chapter: 9
     definition: >
