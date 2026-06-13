@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 import mermaid from 'astro-mermaid';
 
 export default defineConfig({
+  site: 'https://software-design-ai-era.netlify.app',
   markdown: {
     gfm: true,
   },

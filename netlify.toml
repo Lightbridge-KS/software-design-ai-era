@@ -1,3 +1,9 @@
 [build]
 command = "pnpm build"
 publish = "dist"
+
+[build.environment]
+# Astro 6 needs Node >=18.20.8 / >=20.3 / >=22. Pin to avoid drift on Netlify.
+NODE_VERSION = "20"
+# pnpm is detected from pnpm-lock.yaml; the examples/ subproject (its own
+# package.json/lockfile, no workspace) is not installed or built here.
