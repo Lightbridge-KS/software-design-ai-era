@@ -713,6 +713,54 @@ terms:
       "Prefer the module-level instance almost always; reach for a Singleton
       class only with a concrete reason the module form can't meet."
 
+  - term: Adapter
+    chapter: 11
+    definition: >
+      A wrapper that implements the interface a client expects (the target)
+      and translates each call to an object with a different, incompatible
+      interface (the adaptee) — typically code you don't own.
+    why_it_matters: >
+      Lets foreign or legacy code slot into your design without its shape
+      (names, units, return types) leaking across the codebase.
+    prompt_phrasing: >
+      "Adapt this third-party SDK to our interface — implement our target and
+      translate to theirs inside."
+    anti_phrase: >
+      "An adapter must translate, not rename — a 1:1 forward is a pass-through.
+      And don't adapt code you own; change it instead."
+
+  - term: Façade
+    chapter: 11
+    definition: >
+      A single simplified interface in front of a whole subsystem, coordinating
+      its parts so callers depend on one entry point instead of many.
+    why_it_matters: >
+      A depth-adding move (Ousterhout): a tiny interface over real
+      functionality, so callers learn one thing, not the orchestration.
+    prompt_phrasing: >
+      "Put a Façade over this subsystem — one entry point (a module-level
+      function is fine) that hides the orchestration."
+    anti_phrase: >
+      "A façade must simplify, not forward 1:1 or re-expose the whole
+      subsystem; it's an additional simple door, not a wall."
+
+  - term: Protocol (structural typing)
+    chapter: 11
+    definition: >
+      A Python interface that matches by shape, not by inheritance: any object
+      with the right methods satisfies it, no base class required
+      (typing.Protocol; @runtime_checkable for isinstance checks).
+    why_it_matters: >
+      The way to "code to the interface" for code you can't make inherit your
+      ABC — third-party or foreign classes — and the reason a structural match
+      sometimes needs no adapter at all.
+    prompt_phrasing: >
+      "Depend on a Protocol here (structural) so we don't have to inherit their
+      class."
+    anti_phrase: >
+      "Own both sides → ABC (explicit, nominal); reach for Protocol when
+      retrofitting, not as the default for code you control."
+
   - term: Strategy pattern
     chapter: 13
     definition: >
