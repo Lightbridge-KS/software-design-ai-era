@@ -21,12 +21,17 @@ These were decided by the editor — do not relitigate without being asked:
    One-off everyday examples (exporters, parsers, configs) are fine where clearer.
 2. **Interface style:** teach both, **ABC as the default** (`I*` prefix naming).
    Decision rule taught explicitly: you control both sides → ABC; retrofitting
-   third-party code / structural typing → `Protocol` (shines in Chapter 12, Adapter).
+   third-party code / structural typing → `Protocol` (shines in Chapter 11, Adapter).
 3. **Agent flavor:** **strictly agent-neutral.** Prompts and exercises must work with
    any capable coding agent. Refer to "your agent", never a product name, in prose.
    Core primitives (AGENTS.md, skills, MCP) are named generically since they work
    across major agentic systems.
-4. **Open (do not assume):** final title · i18n/translated editions.
+4. **Part III grouping:** pattern chapters are grouped by the classic GoF triad —
+   **Creational** (Ch 10 Factories + Singleton), **Structural** (Ch 11 Adapter &
+   Façade · Ch 12 Composite & Decorator), **Behavioral** (Ch 13 Strategy & Template
+   Method · Ch 14 Observer & State · Ch 15 Iterator & Visitor). The triad is taught
+   as vocabulary; chapters still pair patterns by the problem they solve.
+5. **Open (do not assume):** final title · i18n/translated editions.
 
 ## Voice & Style
 
@@ -50,7 +55,7 @@ These were decided by the editor — do not relitigate without being asked:
   Appendix A) in the same change set. Each entry has the 4 phrasebook fields —
   definition, why-it-matters, prompt-phrasing, anti-phrase.
 - Chapter stubs are `.md`; convert to `.mdx` when drafting (recurring sections use
-  MDX components, created alongside Chapter 10).
+  MDX components, created alongside Chapter 13).
 
 ## Code Rules
 
@@ -88,8 +93,8 @@ These were decided by the editor — do not relitigate without being asked:
   before drafting; never write a full chapter unprompted.
 - Git: GitHub Flow; Conventional Commits; commit directly to `main` in this early
   phase, move to one-chapter-per-branch/PR once drafting begins.
-- The finished Chapter 10 is the gold-standard exemplar for the template; consult it
-  when drafting later chapters.
+- The finished Chapter 13 (Strategy & Template Method) is the gold-standard exemplar
+  for the template; consult it when drafting later chapters.
 - **Read `docs/STYLE-SAMPLES.md` before drafting any prose** — editor-approved
-  excerpts from Chapters 9–10 with the voice's moves annotated. Imitate the moves,
+  excerpts from Chapters 9 and 13 with the voice's moves annotated. Imitate the moves,
   not the sentences.

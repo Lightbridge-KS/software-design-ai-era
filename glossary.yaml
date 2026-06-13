@@ -650,7 +650,7 @@ terms:
       third-party API is not a pass-through — keep it."
 
   - term: Strategy pattern
-    chapter: 10
+    chapter: 13
     definition: >
       Encapsulate each variant of an algorithm behind a common interface and
       inject the chosen one; the caller is told what to use, not how to choose.
@@ -665,7 +665,7 @@ terms:
       If there are only two stable branches, keep the if."
 
   - term: functions as strategies
-    chapter: 10
+    chapter: 13
     definition: >
       The Pythonic form of Strategy: each variant is a plain function (or
       closure) matching a Callable type alias, no class hierarchy.
@@ -680,7 +680,7 @@ terms:
       that one to a class — not the rest."
 
   - term: registry (dispatch) dict
-    chapter: 10
+    chapter: 13
     definition: >
       A dict mapping keys to strategies — the single place where "which
       variants exist" is recorded.
@@ -695,7 +695,7 @@ terms:
       auto-discovery."
 
   - term: Template Method pattern
-    chapter: 10
+    chapter: 13
     definition: >
       Fix an algorithm's skeleton in a base-class method; subclasses supply
       the varying steps but never the order of steps.
@@ -710,7 +710,7 @@ terms:
       is dead weight. When unsure, prefer Strategy and composition."
 
   - term: hook method
-    chapter: 10
+    chapter: 13
     definition: >
       A step in a Template Method skeleton with a sensible default
       implementation; overriding it is optional, not required.

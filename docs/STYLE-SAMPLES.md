@@ -1,6 +1,6 @@
 # STYLE-SAMPLES — The Book's Voice Reference
 
-Purpose: cross-session consistency (design doc §8.3). Chapters 9 and 10 were
+Purpose: cross-session consistency (design doc §8.3). Chapters 9 and 13 were
 approved by the editor as the voice standard ("very high-yield and insightful —
 keep this tone"). This file holds verbatim excerpts with annotations naming the
 *moves* they make. When drafting, imitate the moves, not the sentences.
@@ -38,7 +38,7 @@ keep this tone"). This file holds verbatim excerpts with annotations naming the
 > The algorithm isn't the problem. The problem is that *several* algorithms are
 > trapped in one body.
 
-— Chapter 10, *The Itch*
+— Chapter 13, *The Itch*
 
 **Moves:** opens mid-story with a small reversal (happy customer = problem);
 change requests arrive as narrative beats, not requirements lists; closes on the
@@ -51,7 +51,7 @@ chapter can reuse as shorthand.
 > the Strategy pattern — an algorithm passed in as a value. The stdlib's whole
 > `key=` convention is strategies all the way down.
 
-— Chapter 10, *Pythonic Notes*
+— Chapter 13, *Pythonic Notes*
 
 **Moves:** dignifies the reader's existing experience instead of teaching down to
 it; the pattern is revealed as something already known, which makes the vocabulary

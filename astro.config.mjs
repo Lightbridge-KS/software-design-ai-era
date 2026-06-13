@@ -46,12 +46,27 @@ export default defineConfig({
           collapsed: false,
           items: [
             { label: 'Overview', slug: 'part-3-patterns' },
-            { label: '10. Strategy and Template Method', slug: 'part-3-patterns/10-strategy-and-template-method' },
-            { label: '11. Factories', slug: 'part-3-patterns/11-factories' },
-            { label: '12. Adapter and Facade', slug: 'part-3-patterns/12-adapter-and-facade' },
-            { label: '13. Observer and State', slug: 'part-3-patterns/13-observer-and-state' },
-            { label: '14. Composite and Decorator', slug: 'part-3-patterns/14-composite-and-decorator' },
-            { label: '15. Iterator, Visitor, and Python Replacements', slug: 'part-3-patterns/15-iterator-visitor-python-replacements' },
+            {
+              label: 'Creational',
+              items: [
+                { label: '10. Factories and Singleton', slug: 'part-3-patterns/10-factories' },
+              ],
+            },
+            {
+              label: 'Structural',
+              items: [
+                { label: '11. Adapter and Façade', slug: 'part-3-patterns/11-adapter-and-facade' },
+                { label: '12. Composite and Decorator', slug: 'part-3-patterns/12-composite-and-decorator' },
+              ],
+            },
+            {
+              label: 'Behavioral',
+              items: [
+                { label: '13. Strategy and Template Method', slug: 'part-3-patterns/13-strategy-and-template-method' },
+                { label: '14. Observer and State', slug: 'part-3-patterns/14-observer-and-state' },
+                { label: '15. Iterator and Visitor', slug: 'part-3-patterns/15-iterator-visitor-python-replacements' },
+              ],
+            },
           ],
         },
         {

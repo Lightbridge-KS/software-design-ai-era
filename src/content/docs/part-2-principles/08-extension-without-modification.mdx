@@ -131,8 +131,8 @@ is never touched. The `examples/ch08/` tests prove it literally: a `CryptoGatewa
 test, not a slogan.
 
 If this shape feels familiar, it should: it is the skeleton of half of Part III.
-Strategy (Chapter 10) is this applied to interchangeable *algorithms*; the Factory of
-Chapter 11 decides *which* gateway to construct; the Adapter of Chapter 12 wraps a
+Strategy (Chapter 13) is this applied to interchangeable *algorithms*; the Factory of
+Chapter 10 decides *which* gateway to construct; the Adapter of Chapter 11 wraps a
 provider whose SDK doesn't match your interface. They are all this principle, named.
 
 ## Choosing: ABC vs. `Protocol`
@@ -151,14 +151,14 @@ and a missing method is an error at construction. Use a **`Protocol`** when you 
 something you *can't* make inherit your base — a third-party SDK, a class from another
 package — to satisfy your interface anyway. Because `Protocol` is structural, that
 foreign class fits the moment it has the right shape, untouched. This is why
-`Protocol` shines in Chapter 12's Adapter, where the whole job is making code you
+`Protocol` shines in Chapter 11's Adapter, where the whole job is making code you
 don't own fit an interface you do.
 
 ## Pythonic Notes
 
 The lightest interface in Python is not a class at all — it's a `Callable`. When the
 abstraction has a single method, a function *is* the interface, and "inject an
-implementation" means "pass a function" (Chapter 10's functions-as-strategies, seen
+implementation" means "pass a function" (Chapter 13's functions-as-strategies, seen
 from the principle side). Reach for an ABC when the interface has several methods or
 the implementations carry state; reach for a function when it doesn't.
 
@@ -177,12 +177,12 @@ This is the principle agents over-apply most, so the brake matters here more tha
 anywhere. **An interface with one implementation is not Open-Closed — it is
 speculation** (Chapter 9, exactly). The `if/elif` on payment method is *fine* while
 there is one or two of them and no third in sight; the abstraction earns its place
-when a real second axis of variation arrives, the way Chapter 10's discount rules did
+when a real second axis of variation arrives, the way Chapter 13's discount rules did
 after the change-log demanded them. Build the seam on evidence, not on a hunch that
 "we might add providers someday."
 
 And the cluster has its own over-corrections. Don't ban inheritance — it is right for
-a genuine *is-a* and for Template Method (Chapter 10); "prefer composition" is a lean,
+a genuine *is-a* and for Template Method (Chapter 13); "prefer composition" is a lean,
 not a law. Don't invert *every* dependency — invert at real boundaries (volatile,
 external, swappable things like payment providers), not between two stable functions
 that will always change together. Dependency inversion at the wrong seam is just

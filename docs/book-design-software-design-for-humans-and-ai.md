@@ -125,35 +125,42 @@ Parts II–IV give the reader the language; Part V teaches them to *speak* it fl
 
 ### Part III — Patterns: The Phrasebook (Pythonic & Curated)
 
-Each pattern chapter follows the standard template (§4 below). Patterns are grouped by the *problem they solve*, and every chapter includes the Pythonic alternative that often beats the classical class-based form.
+Each pattern chapter follows the standard template (§4 below). Chapters are grouped by the classic **Creational / Structural / Behavioral** triad (taught as vocabulary), and within each family patterns are paired by the *problem they solve*. Every chapter includes the Pythonic alternative that often beats the classical class-based form.
 
-**Chapter 10 · Encapsulating Algorithms: Strategy and Template Method**
-- Strategy: classical form → **functions as strategies** (first-class functions make this trivial in Python) → when classes still win (stateful strategies)
-- Template Method: the skeleton-algorithm pattern; ABC hooks
-- Choosing between them (composition vs. inheritance, again)
+#### Creational
 
-**Chapter 11 · Creating Objects: Factory Function, Factory Method, Abstract Factory**
+**Chapter 10 · Creating Objects: Factories and Singleton**
 - Factory *function* first (the Pythonic default) · Factory Method when subclasses must decide · Abstract Factory for families · registries and `dict` dispatch as lightweight factories
+- Singleton (demoted to a section here, deliberately): module-level instance as the Pythonic form; why agents over-use Singleton and how to push back
 
-**Chapter 12 · Integrating and Simplifying: Adapter and Façade**
+#### Structural
+
+**Chapter 11 · Integrating and Simplifying: Adapter and Façade**
 - Adapter: making third-party code fit your interface (`Protocol` shines here)
 - Façade: one friendly door to a messy subsystem
 - Both reframed through Ousterhout: a Façade is precisely a **depth-adding move** (simple interface over powerful functionality); an Adapter that adds no depth is a pass-through layer wearing a pattern name (ties back to Ch 9's warning-sign catalog)
 - These two are the *most useful patterns for AI-era codebases* — agents constantly glue libraries together
 
-**Chapter 13 · Reacting to Change: Observer and State**
+**Chapter 12 · Structuring Objects: Composite and Decorator**
+- Composite: uniform treatment of trees (report sections, file systems)
+- Decorator pattern vs. Python's `@decorator` syntax — same idea, different mechanics; when each applies
+
+#### Behavioral
+
+**Chapter 13 · Encapsulating Algorithms: Strategy and Template Method**
+- Strategy: classical form → **functions as strategies** (first-class functions make this trivial in Python) → when classes still win (stateful strategies)
+- Template Method: the skeleton-algorithm pattern; ABC hooks
+- Choosing between them (composition vs. inheritance, again)
+- *Written first as the template/voice exemplar; was numbered Ch 10 before the triad regroup.*
+
+**Chapter 14 · Reacting to Change: Observer and State**
 - Observer: publish/subscribe at codebase scale; callbacks and `Event` patterns
 - State: state machines as classes vs. `Enum` + `match` dispatch
 - Mermaid `stateDiagram` as the design artifact
 
-**Chapter 14 · Structuring Objects: Composite and Decorator**
-- Composite: uniform treatment of trees (report sections, file systems)
-- Decorator pattern vs. Python's `@decorator` syntax — same idea, different mechanics; when each applies
-
-**Chapter 15 · Traversal and Dispatch: Iterator, Visitor — and Their Python Replacements**
+**Chapter 15 · Traversal and Dispatch: Iterator and Visitor — and Their Python Replacements**
 - Iterator: the protocol (`__iter__`/`__next__`), generators as the idiomatic form
 - Visitor: classical double-dispatch → structural `match` as the modern alternative
-- Singleton (demoted to a section here, deliberately): module-level instance as the Pythonic form; why agents over-use Singleton and how to push back
 
 ---
 
@@ -240,7 +247,7 @@ Consistency is itself a design statement — readers (and agents pointed at the 
 
 Pattern chapters (Part III) extend section 2–3 with Mak-style sub-beats, which work well: *Desired design features → Before → After → Generic model (Mermaid classDiagram)* — plus a *"Choosing between X and Y"* section when the chapter pairs patterns.
 
-### Worked sample of the template: Chapter 10 (Strategy), abridged
+### Worked sample of the template: Chapter 13 (Strategy), abridged
 
 **1. The Itch.** Your report-export module supports three output formats (CSV, JSON, Markdown) via a growing `if/elif` chain inside one `export()` function. A fourth format request just arrived. Every addition risks the existing three.
 
@@ -322,7 +329,7 @@ Chapter 4  ──► "single responsibility", "split by responsibility"
 Chapter 5  ──► "loose coupling", "Law of Demeter", "tell don't ask"
 Chapter 8  ──► "composition over inheritance", "code to the interface"
 Chapter 9  ──► "YAGNI", "right-size this", "no premature abstraction"   ◄── the brakes
-Chapter 10 ──► "Strategy pattern", "functions as strategies"
+Chapter 13 ──► "Strategy pattern", "functions as strategies"
    ⋮                              ⋮
 Appendix A ──► the consolidated glossary-phrasebook
 ```
@@ -358,12 +365,12 @@ book/
             │   ├── 08-extension-without-modification.mdx
             │   └── 09-counterweights-right-sizing.mdx
             ├── part-3-patterns/
-            │   ├── 10-strategy-template-method.mdx
-            │   ├── 11-factories.mdx
-            │   ├── 12-adapter-facade.mdx
-            │   ├── 13-observer-state.mdx
-            │   ├── 14-composite-decorator.mdx
-            │   └── 15-iterator-visitor-singleton.mdx
+            │   ├── 10-factories.mdx                  # Creational (+ Singleton)
+            │   ├── 11-adapter-and-facade.mdx          # Structural
+            │   ├── 12-composite-and-decorator.mdx     # Structural
+            │   ├── 13-strategy-and-template-method.mdx # Behavioral
+            │   ├── 14-observer-and-state.mdx          # Behavioral
+            │   └── 15-iterator-visitor-python-replacements.mdx # Behavioral
             ├── part-4-codebase/
             │   ├── 16-modules-packages.mdx
             │   ├── 17-dependency-direction-tiers.mdx
@@ -410,7 +417,7 @@ sidebar:
 
 Don't write linearly. Suggested order:
 
-1. **Chapter 10 (Strategy)** first — it's the clearest pattern, and writing it forces you to finalize the chapter template and MDX components.
+1. **Chapter 13 (Strategy)** first — it's the clearest pattern, and writing it forces you to finalize the chapter template and MDX components. (Written first; numbered 10 until the Part III triad regroup moved it to 13.)
 2. **Chapter 9 (Counterweights)** second — it defines the book's voice (pragmatic, anti-over-engineering) and you'll reference it from everywhere.
 3. **Chapter 1** third — the thesis chapter is easier to write once you've *lived* the template.
 4. Then Parts II → III → IV in order, accumulating glossary rows as you go.
@@ -484,7 +491,7 @@ Claude Code sessions are stateless between chapters, so consistency must live in
 - **`glossary.yaml`** — single source of truth for all vocabulary; Appendix A renders from it
 - **`docs/chapter-template.mdx`** — a skeleton file the agent copies to start each chapter
 - **`STYLE-SAMPLES.md`** — 2–3 approved excerpts of finished prose as the voice reference
-- The finished **Chapter 10** serves as the gold-standard exemplar; its path is referenced from `CLAUDE.md`
+- The finished **Chapter 13** (Strategy) serves as the gold-standard exemplar; its path is referenced from `CLAUDE.md`
 
 ---
 
