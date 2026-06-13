@@ -3,7 +3,8 @@ title: "4. Cohesion and the Single Responsibility Principle"
 description: "One reason to change — how to recognize a unit that does too much, and split it by responsibility without over-fragmenting."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -15,12 +16,22 @@ together — is the force this chapter makes precise, and the **Single Responsib
 Principle** is how you act on it. We pick up exactly where Chapter 2's disaster left
 off: the `checkout()` function that does everything.
 
+<Aside type="tip" title="Two languages, one design">
+From here on, code listings come in **Python** and **TypeScript** — pick the tab you
+think in (your choice sticks across the whole book). The point of showing both is the
+book's thesis made visible: the *design* is the constant; the language is just the
+syntax it's written in.
+</Aside>
+
 ## The Itch
 
 You have a one-line job: Germany raised its VAT, so the rate goes from 0.19 to 0.20.
 Thirty seconds of work. You open `checkout()` and find the tax line — sitting three
-inches above a block of SMTP code and just below a member-discount branch, with a
-JSON file write at the bottom.
+inches above a block of email-sending code and just below a member-discount branch,
+with a JSON file write at the bottom.
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def checkout(order: Order, payment_token: str, send_email: bool = True) -> float:
@@ -33,6 +44,27 @@ def checkout(order: Order, payment_token: str, send_email: bool = True) -> float
     # ... eight lines of email ...
     # ... a JSON file read, append, write ...
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+function checkout(order: Order, paymentToken: string, sendEmail = true): number {
+  let total = subtotal(order);
+  if (order.customer.isMember) {
+    total = total * 0.85;
+  }
+  if (order.country === "DE") {
+    total = total + total * 0.19; // <- the one line you came to change
+  }
+  // ... shipping branches ...
+  // ... eight lines of email ...
+  // ... a JSON file read, append, write ...
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 The edit itself is trivial. The *fear* is not. To be sure changing the tax line
 breaks nothing, you have to convince yourself it doesn't interact with the discount
@@ -78,8 +110,13 @@ The cure is not cleverness — it is *separation*. Give each responsibility its 
 cohesive home, and let a thin `checkout` orchestrate them. No patterns yet (those
 are Part III); just one principle, applied.
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+One function, four actors — finance (tax), ops (shipping), marketing (email), and
+engineering (storage) all sharing a single body:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def checkout(order: Order, payment_token: str, send_email: bool = True) -> float:
@@ -101,9 +138,40 @@ def checkout(order: Order, payment_token: str, send_email: bool = True) -> float
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
 
-One responsibility per module, then a thin function to orchestrate them:
+```typescript
+function checkout(order: Order, paymentToken: string, sendEmail = true): number {
+  let total = subtotal(order);
+  if (order.customer.isMember) {
+    total = total * 0.85;
+  }
+  if (order.country === "US") {
+    total = total + total * 0.07;
+  } else if (order.country === "DE") {
+    total = total + total * 0.19;
+  }
+  // ... more tax branches, shipping branches, gift wrap ...
+  total = Math.round(total * 100) / 100;
+  console.log(`Charging ${paymentToken} for ${total.toFixed(2)}`);
+  if (order.customer.isMember && sendEmail) {
+    // ... eight lines building and sending an email ...
+  }
+  // ... read orders.json, append, write it back ...
+  return total;
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+One responsibility per file, then a thin function to orchestrate them. **Pricing**
+answers to finance — pure money math, no I/O, so it tests in isolation:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # pricing.py — one actor: finance (the money math). No I/O.
@@ -134,6 +202,47 @@ def order_total(order: Order) -> float:
     return round(discounted + tax + shipping, 2)
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+// pricing.ts — one actor: finance (the money math). No I/O.
+import { type Order, subtotal } from "./models";
+
+const TAX_RATES: Record<string, number> = { US: 0.07, DE: 0.19, JP: 0.1 };
+const EU_COUNTRIES = ["DE", "FR", "NL"];
+
+export const memberDiscount = (sub: number, isMember: boolean): number =>
+  isMember ? sub * 0.85 : sub;
+
+export const taxFor = (amount: number, country: string): number =>
+  amount * (TAX_RATES[country] ?? 0);
+
+export const shippingFor = (country: string, giftWrap: boolean): number => {
+  let base: number;
+  if (country === "US") base = 5.0;
+  else if (EU_COUNTRIES.includes(country)) base = 9.9;
+  else base = 24.9;
+  return base + (giftWrap ? 3.5 : 0);
+};
+
+export const orderTotal = (order: Order): number => {
+  const discounted = memberDiscount(subtotal(order), order.customer.isMember);
+  const tax = taxFor(discounted, order.country);
+  const shipping = shippingFor(order.country, order.giftWrap);
+  return Math.round((discounted + tax + shipping) * 100) / 100;
+};
+```
+
+  </TabItem>
+</LangTabs>
+
+**Notify** answers to marketing — the receipt copy, with the email I/O quarantined at
+the edge:
+
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 # notify.py — one actor: marketing (the receipt message).
 import smtplib
@@ -155,6 +264,38 @@ def send_receipt(order: Order, total: float) -> None:
         pass  # a failed email must never block a sale
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+// notify.ts — one actor: marketing (the receipt message).
+import { sendMail } from "./transport"; // the SMTP edge, isolated
+import { type Order } from "./models";
+
+export const receiptBody = (order: Order, total: number): string =>
+  `Thanks ${order.customer.name}! You paid ${total.toFixed(2)}.`;
+
+export const sendReceipt = (order: Order, total: number): void => {
+  try {
+    sendMail({
+      to: order.customer.email,
+      subject: "Your checkout-lite receipt",
+      body: receiptBody(order, total),
+    });
+  } catch {
+    // a failed email must never block a sale
+  }
+};
+```
+
+  </TabItem>
+</LangTabs>
+
+**Persistence** answers to engineering — how orders are stored, and nothing else:
+
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 # persistence.py — one actor: engineering (how orders are stored).
 import json
@@ -169,6 +310,35 @@ def save_order(order: Order, total: float) -> None:
     existing.append(record)
     ORDERS_FILE.write_text(json.dumps(existing, indent=2))
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+// persistence.ts — one actor: engineering (how orders are stored).
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { type Order } from "./models";
+
+const ORDERS_FILE = "orders.json";
+
+export const saveOrder = (order: Order, total: number): void => {
+  const record = { customer: order.customer.name, total };
+  const existing: unknown[] = existsSync(ORDERS_FILE)
+    ? (JSON.parse(readFileSync(ORDERS_FILE, "utf8")) as unknown[])
+    : [];
+  existing.push(record);
+  writeFileSync(ORDERS_FILE, JSON.stringify(existing, null, 2));
+};
+```
+
+  </TabItem>
+</LangTabs>
+
+**Checkout** answers to one last actor — the workflow itself. It owns the *sequence*,
+not the steps' internals, so it reads like a table of contents:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # checkout.py — one actor: the order workflow (the sequence of steps).
@@ -187,16 +357,43 @@ def checkout(order: Order, payment_token: str, send_email: bool = True) -> float
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
 
-Now the German VAT change touches exactly one file — `pricing.py` — and a reader
-opening it sees only money math, with no email or disk to reason around. The
-`checkout` that remains reads like a table of contents: price, charge, notify, save.
-This After is not invented for the chapter; it is where the clean `pricing.py` you
-met in Chapter 3 actually came from. The full code, with tests proving the split
-changed no behavior, is in `examples/ch04/`.
+```typescript
+// checkout.ts — one actor: the order workflow (the sequence of steps).
+import { type Order } from "./models";
+import { orderTotal } from "./pricing";
+import { sendReceipt } from "./notify";
+import { saveOrder } from "./persistence";
 
-## Pythonic Notes
+export const checkout = (order: Order, paymentToken: string, sendEmail = true): number => {
+  const total = orderTotal(order);
+  console.log(`Charging ${paymentToken} for ${total.toFixed(2)}`);
+  if (order.customer.isMember && sendEmail) {
+    sendReceipt(order, total);
+  }
+  saveOrder(order, total);
+  return total;
+};
+```
+
+  </TabItem>
+</LangTabs>
+
+Now the German VAT change touches exactly one file — `pricing.py` / `pricing.ts` —
+and a reader opening it sees only money math, with no email or disk to reason around.
+The `checkout` that remains reads like a table of contents: price, charge, notify,
+save. This After is not invented for the chapter; it is where the clean pricing module
+you met in Chapter 3 actually came from. The full code in both languages, with tests
+proving the split changed no behavior, is in `examples/ch04/`.
+
+## Language Notes
+
+Both languages reach the same split, and from the same starting heuristic: the home
+for a responsibility is a **file**, not necessarily a class.
+
+<LangTabs>
+  <TabItem label="Python">
 
 In many languages, "give each responsibility a home" means "make a class." In Python
 it usually means **make a module**. A module is already a cohesion boundary: it
@@ -212,6 +409,28 @@ smell is a class named `Manager`, `Processor`, `Helper`, or `Util`: these are ra
 concepts: they are drawers, and a drawer is low cohesion with a capital letter. When
 you see one, ask what *actual* responsibility it holds — the answer usually splits it
 into a real module and a couple of honest functions.
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+A TypeScript **module is a file**, and that file is the cohesion boundary in exactly
+the same way. One concern per file; `export` is the public surface, and anything left
+un-exported is private — the leading-underscore convention made into a language rule.
+`pricing.ts` groups its functions and exports the few that callers need, no `class`
+required. Plain functions plus `readonly` types carry the design that a Python module
+carries with functions and frozen dataclasses.
+
+The grab-bag smell is identical, only the names shift: a `*Manager`, `*Service`, or
+`utils.ts` file is the drawer wearing a `.ts` extension — a place where unrelated
+helpers accumulate because the file was already open. A particular TypeScript trap is
+the **barrel file** (`index.ts` that re-exports everything): handy for a genuinely
+cohesive package, but when a barrel re-exports four unrelated concerns it just gives
+low cohesion a tidy front door. Ask the same question you'd ask in Python — *what one
+responsibility does this file own?* — and let the answer, not the noun, decide the
+split.
+
+  </TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -295,14 +514,16 @@ it is. The goal is one clean cut, not a refactor of the whole file.
 
 </AICollab>
 
-<TryIt starter="examples/ch04/before.py">
+<TryIt starter="examples/ch04/py/before.py">
 
-Hand your agent the `checkout()` tangle (or a `ReportBuilder` from your own code that
-formats, computes, *and* writes a file). Run the **identify-then-split** prompt and
+Hand your agent the `checkout()` tangle (Python: `examples/ch04/py/before.py` ·
+TypeScript: `examples/ch04/ts/before.ts`), or a `ReportBuilder` from your own code that
+formats, computes, *and* writes a file. Run the **identify-then-split** prompt and
 read its responsibility list first — is it grouping by *actor*, or just by paragraph?
 Then grade the result against the checklist, watching both failure directions at
 once: did a god function survive, and did anything get split that should have stayed
-whole? Our worked split, with behavior-preserving tests, is in `examples/ch04/`.
+whole? Our worked split, in both languages with behavior-preserving tests, is in
+`examples/ch04/`.
 
 </TryIt>
 
@@ -313,9 +534,9 @@ whole? Our worked split, with behavior-preserving tests, is in `examples/ch04/`.
 - The **Single Responsibility Principle** operationalizes it: one reason to change
   per unit. Count reasons by counting **actors** — finance, ops, marketing, and
   engineering should not share one function.
-- Split **by responsibility, not by line count.** In Python the home for a
-  responsibility is usually a *module*, not a class; a `Manager`/`Helper` class is
-  often a drawer in disguise.
+- Split **by responsibility, not by line count.** The home for a responsibility is
+  often a *file/module*, not a class — a Python module, a TypeScript file; a
+  `Manager`/`Helper` class (or a `utils.ts`) is often a drawer in disguise.
 - The payoff is testable in isolation: once pricing is its own concern, you can
   verify it with no email server and no filesystem.
 - Cohesion is symmetric — over-fragmenting related parts is as harmful as merging
