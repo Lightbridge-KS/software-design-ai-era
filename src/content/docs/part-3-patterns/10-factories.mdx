@@ -323,7 +323,9 @@ classDiagram
     }
     Creator ..> Product : creates
     Creator <|-- CreatorA
+    Creator <|-- CreatorB
     Product <|.. ConcreteProductA
+    Product <|.. ConcreteProductB
 ```
 
 **Intent:** centralize the choice of *which concrete type to build*, so callers
@@ -341,12 +343,19 @@ class Creator(ABC):
 class CreatorA(Creator):
     def factory_method(self) -> Product:
         return ConcreteProductA()
+
+class CreatorB(Creator):
+    def factory_method(self) -> Product:
+        return ConcreteProductB()
 ```
 
 **Pythonic** — a registry of constructors *is* the factory:
 
 ```python
-_PRODUCTS: dict[str, Callable[[], Product]] = {"a": ConcreteProductA}
+_PRODUCTS: dict[str, Callable[[], Product]] = {
+    "a": ConcreteProductA,
+    "b": ConcreteProductB,
+}
 
 def make_product(kind: str) -> Product:
     return _PRODUCTS[kind]()   # a class is already a callable

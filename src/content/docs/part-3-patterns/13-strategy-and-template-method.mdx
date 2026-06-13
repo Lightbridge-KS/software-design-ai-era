@@ -520,6 +520,15 @@ class AbstractFlow(ABC):
     @abstractmethod
     def step_two(self): ...
     def hook(self): return "default"     # optional override
+
+class ConcreteFlow(AbstractFlow):        # supplies steps, keeps the default hook
+    def step_one(self): return "one"
+    def step_two(self): return "two"
+
+class CustomFlow(AbstractFlow):          # supplies steps and overrides the hook
+    def step_one(self): return "1"
+    def step_two(self): return "2"
+    def hook(self): return "custom"
 ```
 
 **Pythonic** — for a couple of steps, pass them as functions instead of
