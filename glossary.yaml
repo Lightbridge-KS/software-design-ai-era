@@ -315,6 +315,68 @@ terms:
       abstraction to invert a dependency that has no reason to be inverted
       (that's Chapter 8, and only when earned)."
 
+  - term: encapsulation
+    chapter: 6
+    definition: >
+      Bundling state together with the behavior that guards it, exposing a
+      deliberate public surface over a hidden implementation.
+    why_it_matters: >
+      An object that guards its own invariants cannot be put into an illegal
+      state from outside; what is hidden cannot be coupled to or corrupted.
+    prompt_phrasing: >
+      "Hide the implementation; expose only what callers need." / "Make
+      illegal states unrepresentable."
+    anti_phrase: >
+      "Encapsulation pays only when there's an invariant to guard — don't
+      wrap plain data in ceremony that hides nothing."
+
+  - term: information hiding
+    chapter: 6
+    definition: >
+      Parnas's principle: hide the design decisions most likely to change
+      (or most able to do harm) behind an interface, so callers cannot
+      depend on them.
+    why_it_matters: >
+      Decisions you hide are free to change without breaking callers; it is
+      the mechanism that produces loose coupling.
+    prompt_phrasing: >
+      "What's likely to change here? Hide it behind the interface."
+    anti_phrase: >
+      "Hide what changes or harms — not honest, stable data that callers
+      legitimately need to read."
+
+  - term: public API (public surface)
+    chapter: 6
+    definition: >
+      The set of names a unit deliberately exposes to its callers — the
+      methods, properties, and attributes that are not implementation
+      detail. In Python, marked by the absence of a leading underscore and
+      by __all__ at module level.
+    why_it_matters: >
+      The public surface is the contract; everything behind it is free to
+      change. A narrow surface means fewer ways to be misused and less for
+      any reader (or agent) to learn.
+    prompt_phrasing: >
+      "Narrow the public API — expose only what callers need; mark the rest
+      private."
+    anti_phrase: >
+      "Narrow, not starved: don't hide things callers legitimately need and
+      force them to reach around the wall."
+
+  - term: immutability
+    chapter: 6
+    definition: >
+      Making an object unchangeable after construction (e.g. a frozen
+      dataclass), so there is no mutation to guard against.
+    why_it_matters: >
+      The strongest form of encapsulation for value objects: no setters, no
+      stale state, safe to share freely.
+    prompt_phrasing: >
+      "Make this immutable — a frozen dataclass / value object."
+    anti_phrase: >
+      "Not everything should be frozen — objects with a genuine lifecycle
+      (a cart filling up, an order changing state) need controlled mutation."
+
   - term: YAGNI
     chapter: 9
     definition: >

@@ -1,0 +1,272 @@
+---
+title: "6. Encapsulation and Information Hiding"
+description: "A module's value is what it lets you ignore. Hide the implementation, narrow the public surface, and protect invariants — without ceremony."
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import AICollab from '../../../components/AICollab.astro';
+import VocabTable from '../../../components/VocabTable.astro';
+import PromptCard from '../../../components/PromptCard.astro';
+import TryIt from '../../../components/TryIt.astro';
+
+Chapter 5 said to know as little as possible about other units. This chapter is the
+other side of that coin: give other units as little as possible *to* know. Loose
+coupling is what you get when modules hide their internals — you cannot reach through
+a wall that isn't there. Encapsulation is how you build the wall, and the guiding
+idea is simple: **a module's value is what it lets you ignore.**
+
+## The Itch
+
+Here is a shopping cart, written the way objects often start — everything public,
+because it was easiest:
+
+```python
+@dataclass
+class ShoppingCart:
+    items: list[LineItem] = field(default_factory=list)
+    discount_rate: float = 0.0
+    total: float = 0.0
+
+    def recompute(self) -> None:
+        subtotal = sum(item.price for item in self.items)
+        self.total = round(subtotal * (1 - self.discount_rate), 2)
+```
+
+It works in the demo. In production it rots, because nothing stops a caller from
+breaking it:
+
+```python
+cart = ShoppingCart()
+cart.items.append(LineItem("coffee", 12.50))   # total now silently wrong
+print(cart.total)                              # 0.00 — stale, and a lie
+cart.discount_rate = 2.0                        # 200% off, cheerfully accepted
+cart.recompute()                                # total is now negative (-12.50)
+```
+
+Every one of these lines is *allowed*, and that is the whole problem. The object
+holds an invariant — *`total` equals the discounted sum of `items`*, and *`discount_rate`
+is a fraction between 0 and 1* — but it has no power to enforce it, because every
+field is exposed for anyone to set. The cart cannot keep its own promises. That
+helplessness, not any single bad line, is the itch.
+
+## The Concept
+
+**Encapsulation** is bundling state together with the behavior that guards it, and
+exposing a deliberate **public surface** over a hidden implementation.
+**Information hiding** (David Parnas's term) is the design judgment behind it: hide
+the decisions most likely to change — or most able to do harm — so that callers
+*cannot* depend on them. What is hidden cannot be coupled to, and cannot be corrupted.
+
+The test is one question: *can a caller put this object into a state it should never
+be in?* For the cart above, yes — trivially, three different ways. Each "yes" marks
+something that should have been hidden behind behavior and wasn't.
+
+This connects to a deeper idea we will develop fully in Chapter 16. John Ousterhout
+measures a module by its **depth**: how much functionality it hides behind how small
+an interface. A **deep** module presents a tiny surface and does a lot behind it; a
+**shallow** module has an interface nearly as large as its implementation, so it
+hides almost nothing and barely earns its existence. Depth is the goal, because a
+deep module is something you can *use without understanding* — call it through its
+narrow interface and trust the rest. That is a gift to every reader, and in the AI
+era to your agent too: a narrow, honest interface is less context to load and fewer
+ways to be misused. (Chapter 16 makes this precise; here, just register that small
+interfaces hiding real work are the target.)
+
+## Before / After
+
+The cure is to hide the fields and expose only what callers legitimately need — a
+surface that makes the illegal states impossible to express.
+
+<Tabs>
+  <TabItem label="Before">
+
+```python
+@dataclass
+class ShoppingCart:
+    items: list[LineItem] = field(default_factory=list)
+    discount_rate: float = 0.0
+    total: float = 0.0                # caller must keep this in sync, by hand
+
+    def recompute(self) -> None:
+        subtotal = sum(item.price for item in self.items)
+        self.total = round(subtotal * (1 - self.discount_rate), 2)
+```
+
+  </TabItem>
+  <TabItem label="After">
+
+```python
+class ShoppingCart:
+    def __init__(self) -> None:
+        self._items: list[LineItem] = []
+        self._discount_rate: float = 0.0
+
+    def add_item(self, item: LineItem) -> None:
+        self._items.append(item)
+
+    @property
+    def items(self) -> tuple[LineItem, ...]:
+        return tuple(self._items)            # read-only view; can't corrupt us
+
+    @property
+    def discount_rate(self) -> float:
+        return self._discount_rate
+
+    @discount_rate.setter
+    def discount_rate(self, rate: float) -> None:
+        if not 0.0 <= rate <= 1.0:
+            raise ValueError(f"discount_rate must be in [0, 1], got {rate}")
+        self._discount_rate = rate
+
+    @property
+    def total(self) -> float:               # computed on read — never stale
+        subtotal = sum(item.price for item in self._items)
+        return round(subtotal * (1 - self._discount_rate), 2)
+```
+
+  </TabItem>
+</Tabs>
+
+Now the three illegal states are not *forbidden* — they are *unrepresentable*.
+`total` has no setter, so it cannot be assigned a lie; it is computed on every read,
+so it cannot go stale. `discount_rate` rejects anything outside `[0, 1]`. `items`
+returns a tuple, so a caller mutating the result cannot reach the cart's real list.
+The interface shrank and the guarantees grew — the two moves of good encapsulation,
+together. The `examples/ch06/` tests assert exactly this: the before tests
+*demonstrate* each leak, and the after tests *prove* each one impossible.
+
+## Pythonic Notes
+
+Python has no `private` keyword. The single leading underscore — `_items` — is the
+**consenting-adults** convention: a sign that says "implementation detail, don't
+touch," not a wall that stops you. Nothing prevents a determined caller from reaching
+`cart._items`; encapsulation in Python is a social contract the team keeps, not one
+the compiler enforces. (Double-underscore name mangling exists, but it is for
+avoiding subclass name clashes, not for security — reach for it rarely.)
+
+This frees Python from a ritual other languages perform up front. **Do not write
+getters and setters by default.** Start with a plain public attribute. If an
+invariant or a hidden decision later appears, *upgrade* that attribute to a
+`@property` — and no call site changes, because `cart.total` reads identically
+whether `total` is a field or a computed property. This is the *uniform access
+principle*, and it is why premature accessors are pure waste in Python: you can
+always add the guard later, exactly when you have a reason. For "make this
+immutable," a `frozen=True` dataclass turns a value object into something that
+cannot be altered after construction — the strongest encapsulation of all, because
+there is no mutation to guard.
+
+## When NOT to Use
+
+<Aside type="caution" title="Right-sizing">
+Chapter 9 named this failure mode: encapsulation curdling into getter/setter
+ceremony. A class with `get_name`/`set_name`, `get_price`/`set_price` for every field
+hides nothing — the setter accepts whatever the field would have — and adds a layer
+of noise that makes the simple look complicated. In Python that is strictly worse
+than a public attribute.
+
+Encapsulation pays rent only when there is something to protect: an invariant to
+guard, or a decision likely to change. **A value object of plain public fields — a
+DTO, a coordinate, a config record — is correct, not a smell.** `LineItem` in these
+examples is exactly that: two public fields, frozen, no methods, and right. Don't
+privatize honest data; don't wrap a single field in a property that only stores and
+returns it; and don't build a shallow class whose entire job is to forward calls to
+something inside it (Chapter 9's pass-through layer, in object form). Hide what
+needs hiding. Leave the rest in plain sight.
+</Aside>
+
+## 🤖 AI Collaboration
+
+Agents lean toward two opposite errors here, and which one you get depends on the
+prompt. A terse request often yields leaky public state; a request for "proper
+encapsulation" often yields a wall of accessors. Aim between them.
+
+<AICollab>
+
+### Vocabulary
+
+<VocabTable>
+
+| You say | The agent hears |
+|---|---|
+| "Narrow the public API" | Expose only what callers need; hide the rest behind `_` |
+| "Hide the implementation" | Put state behind behavior that guards its invariants |
+| "Make `total` a read-only property" | Compute on read; no setter, so it can't be set wrong |
+| "Make this immutable" | A `frozen` dataclass / value object — no mutation to guard |
+| "Is this module deep or shallow?" | Weigh hidden functionality against interface size |
+
+</VocabTable>
+
+### Prompt templates
+
+<PromptCard title="Narrow the surface, protect the invariants">
+
+This class exposes mutable state that lets callers reach illegal states. Identify its
+invariants, then narrow the public API so those states are unrepresentable: hide the
+raw fields behind `_`, expose computed values as read-only properties, and validate
+on the way in. Do **not** add getters and setters for fields that have no invariant —
+plain public attributes are fine for those.
+
+</PromptCard>
+
+<PromptCard title="Make it a value object">
+
+Turn this into an immutable value object: a `frozen=True` dataclass with no setters.
+If any field needs validation, do it in `__post_init__`. Keep it plain data — no
+behavior beyond what the value itself owns.
+
+</PromptCard>
+
+### Review checklist
+
+- [ ] Can a caller reach an illegal state? (try it — set the field, mutate the list)
+- [ ] Any cached field that should be a computed property instead?
+- [ ] Any mutable internal leaked — a returned `list`/`dict` that aliases private state?
+- [ ] Reverse check: any getter/setter ceremony that hides or guards nothing?
+- [ ] Is the public surface small relative to what the class actually does?
+
+### Agent failure modes
+
+- **Accessor ceremony.** Asked for encapsulation, the agent writes `get_`/`set_` pairs
+  for every field — Java in Python, hiding nothing. Counter: *use properties only
+  where there's an invariant; public attributes otherwise.*
+- **The leaked internal.** It returns `self._items` directly, so a caller's
+  `.append()` mutates the private list. Return a copy or a tuple.
+- **The shallow wrapper.** It "encapsulates" by building a class that just forwards
+  to the thing inside it — a bigger interface, no hidden work. That is a shallow
+  module; ask what it actually hides.
+- **Over-privatizing.** It hides fields that had no invariant, then adds accessors to
+  get them back — motion without protection.
+
+</AICollab>
+
+<TryIt starter="examples/ch06/before.py">
+
+Hand your agent the leaky `ShoppingCart` (or an object of your own with a dangerous
+setter) and run the **narrow-the-surface** prompt. Then probe the result from both
+sides: can you still reach an illegal state (set a computed value, mutate a returned
+collection)? And did the agent over-correct into accessor ceremony around fields that
+never needed it? Our worked version, with tests that prove each illegal state
+unreachable, is in `examples/ch06/`.
+
+</TryIt>
+
+## Key Takeaways
+
+- Encapsulation bundles state with the behavior that guards it; **information
+  hiding** is choosing what callers must *not* be able to depend on. What is hidden
+  cannot be coupled to (Chapter 5) or corrupted.
+- The test is one question: *can a caller reach a state this object should never be
+  in?* Good encapsulation makes illegal states **unrepresentable**, not merely
+  discouraged.
+- In Python, hide with the `_` convention (consenting adults — a signal, not a wall),
+  expose computed values with `@property`, and reach for `frozen` dataclasses to make
+  things immutable. **Don't write getters/setters up front** — upgrade a public
+  attribute to a property later, with no call site changing.
+- A module's worth is its **depth**: much functionality behind a small interface
+  (Ousterhout; Chapter 16). A narrow, honest surface is less for any reader — human
+  or agent — to hold.
+- Right-size it: plain-data value objects should stay public; ceremony that guards no
+  invariant is worse than nothing.
+- **Glossary terms added:** *encapsulation · information hiding · public API (public
+  surface) · immutability.* (Deep and shallow modules are previewed here; their
+  entries arrive with Chapter 16.)
