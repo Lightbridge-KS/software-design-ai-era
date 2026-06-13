@@ -761,6 +761,77 @@ terms:
       "Own both sides → ABC (explicit, nominal); reach for Protocol when
       retrofitting, not as the default for code you control."
 
+  - term: Composite pattern
+    chapter: 12
+    definition: >
+      Compose objects into part-whole trees and treat a single object (a leaf)
+      and a whole tree (a composite) uniformly through one shared component
+      interface; the composite implements it by recursing into its children.
+    why_it_matters: >
+      Removes the isinstance/instanceof fork from every caller — structure logic
+      lives inside the tree, so a client treats one node and a whole subtree the
+      same way and new node kinds don't ripple outward.
+    prompt_phrasing: >
+      "Model this as a Composite: one component interface, a leaf class, and a
+      container class that recurses inside the operation. Remove the type checks
+      at the call sites."
+    anti_phrase: >
+      "Only when a node genuinely contains nodes of its own kind. If the list is
+      flat and never nests, keep the loop — don't impose a tree."
+
+  - term: Decorator pattern
+    chapter: 12
+    definition: >
+      Attach behavior to a single object by wrapping it in another object that
+      implements the same interface, delegating then augmenting; because the
+      wrapper IS the interface, decorators stack at runtime.
+    why_it_matters: >
+      Kills the subclass-per-combination explosion: a few thin wrappers give you
+      every combination by composing at the call site, and the wrapped class is
+      never edited (Open-Closed for behavior).
+    prompt_phrasing: >
+      "Add these concerns with the Decorator pattern: a base decorator that wraps
+      one instance of the interface, one thin decorator per concern, stacked at
+      the call site."
+    anti_phrase: >
+      "Don't wrap a class you own and can edit — just edit it. And don't stack
+      five layers deep; a wrapper that only forwards is a pass-through."
+
+  - term: component interface
+    chapter: 12
+    definition: >
+      The single interface shared by the interchangeable parts of Composite
+      (leaf and container) or Decorator (wrapped and wrapper), so a client can
+      treat them all as one type.
+    why_it_matters: >
+      It is what makes the recursion and the wrapping invisible to callers — the
+      uniformity both patterns promise depends on every participant satisfying
+      one contract.
+    prompt_phrasing: >
+      "Define one component interface that the leaf, the container (or the
+      wrapped object and the wrapper) all implement."
+    anti_phrase: >
+      "Keep it small — one operation if that's all the tree or the stack needs;
+      don't widen the interface to expose child-management on leaves."
+
+  - term: object decorator vs function decorator
+    chapter: 12
+    definition: >
+      The GoF Decorator pattern wraps an object at runtime (a class implementing
+      the interface, holding one instance). A language @decorator is different:
+      Python's @ wraps a function; TypeScript's @ annotates/transforms a class or
+      field at definition time.
+    why_it_matters: >
+      The shared word hides two mechanics. Reach for the object pattern when you
+      need stackable, runtime-composed behavior on an object; the @ syntax fixes
+      one transform at definition time.
+    prompt_phrasing: >
+      "Use the object Decorator pattern here (a runtime wrapper), not the
+      @decorator syntax."
+    anti_phrase: >
+      "Don't reach for @ when you need to choose and stack layers at runtime; and
+      a TS @decorator is annotation, not the wrapping pattern at all."
+
   - term: Strategy pattern
     chapter: 13
     definition: >

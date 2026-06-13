@@ -35,7 +35,7 @@ case: Ch 4). Per-chapter loop: brief → editor approval → draft → gates →
 |----|-------|--------|--------|------|
 | 10 | Factories and Singleton | Creational | ✅ | PY+TS |
 | 11 | Adapter and Façade | Structural | ✅ | PY+TS |
-| 12 | Composite and Decorator | Structural | ⬜ | — |
+| 12 | Composite and Decorator | Structural | ✅ | PY+TS |
 | 13 | Strategy and Template Method | Behavioral | ✅ | PY+TS |
 | 14 | Observer and State | Behavioral | ⬜ | — |
 | 15 | Iterator and Visitor | Behavioral | ⬜ | — |
@@ -68,10 +68,10 @@ case: Ch 4). Per-chapter loop: brief → editor approval → draft → gates →
 
 ## Summary
 
-- **Drafted: 11 / 22 chapters** (Part I complete · Part II complete · Part III: 3/6).
-- **Next:** Ch 12 (Composite & Decorator), then 14, 15 → Part IV → Part V → appendices.
+- **Drafted: 12 / 22 chapters** (Part I complete · Part II complete · Part III: 4/6).
+- **Next:** Ch 14 (Observer & State), then 15 → Part IV → Part V → appendices.
 - Writing order to date: 13 → 9 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 10 → 11
-  (then the multi-language refactor). Appendix A assembles from `glossary.yaml`.
+  (then the multi-language refactor) → 12. Appendix A assembles from `glossary.yaml`.
 
 ## Open editorial items (editor revisit)
 
