@@ -121,6 +121,71 @@ terms:
       "Strategic isn't gold-plating — invest in the design the change needs,
       not the architecture you imagine wanting."
 
+  - term: the design loop
+    chapter: 3
+    definition: >
+      The iterative rhythm of working with an agent: intend → express →
+      generate → review → refine, closing back on itself until accepted.
+    why_it_matters: >
+      A first result is a draft, not an answer; good design comes from the
+      loop, not from a perfect opening prompt. Two phases are the human's —
+      express (highest leverage) and review (where judgment lives).
+    prompt_phrasing: >
+      "Let's iterate: propose a design, I'll review, then we refine."
+    anti_phrase: >
+      "Don't ride momentum — a green checkmark is not the accept signal; an
+      unreviewed draft is still a draft."
+
+  - term: propose before coding
+    chapter: 3
+    definition: >
+      A prompt move that asks the agent to design — signatures, return
+      shape, relationship to existing code — before writing any
+      implementation.
+    why_it_matters: >
+      Surfaces structure while it is still cheap to change, and pre-empts
+      whole classes of error (duplication, wrong return type) before they
+      reach code. The cheapest bug to fix is the one a constraint prevents.
+    prompt_phrasing: >
+      "Before writing any implementation, propose a design and one
+      alternative with the trade-off. Don't write code yet."
+    anti_phrase: >
+      "Skip it for genuinely trivial edits — a one-line change doesn't need
+      a design proposal."
+
+  - term: guide and sensor (feedforward / feedback)
+    chapter: 3
+    definition: >
+      Borrowed from harness engineering (martinfowler.com). A guide steers
+      the agent before it acts (feedforward: conventions, types, design
+      vocabulary); a sensor checks after it acts (feedback: review, tests,
+      CI).
+    why_it_matters: >
+      Both are needed: guides without sensors never learn they failed;
+      sensors without guides repeat the same mistakes.
+    prompt_phrasing: >
+      "Add a guide so this can't happen again" / "Add a sensor that catches
+      this in CI."
+    anti_phrase: >
+      "Don't reach for a heavyweight sensor when a one-line guide (a type, a
+      convention) would prevent the problem outright."
+
+  - term: steering loop
+    chapter: 3
+    definition: >
+      Borrowed from harness engineering (martinfowler.com). Promoting a
+      recurring correction from a one-off fix into a persistent guide or
+      sensor, so the system enforces it automatically thereafter.
+    why_it_matters: >
+      It is how a codebase gets softer over time instead of harder — each
+      lesson learned once is encoded so it need never be relearned.
+    prompt_phrasing: >
+      "This keeps recurring — lock it with a test (sensor) or a rule in the
+      conventions file (guide)."
+    anti_phrase: >
+      "Promote a correction only once it recurs or carries real risk — not
+      every one-off needs to become a permanent rule."
+
   - term: YAGNI
     chapter: 9
     definition: >
