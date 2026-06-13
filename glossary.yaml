@@ -186,6 +186,69 @@ terms:
       "Promote a correction only once it recurs or carries real risk — not
       every one-off needs to become a permanent rule."
 
+  - term: cohesion
+    chapter: 4
+    definition: >
+      How strongly the elements inside a unit (function, class, module)
+      belong together. High cohesion: everything serves one purpose. Low
+      cohesion: unrelated things share a body because the drawer was open.
+    why_it_matters: >
+      Low cohesion makes a small change frightening — you must reason about
+      unrelated code that shares the same unit. It is one of Chapter 2's two
+      master metrics.
+    prompt_phrasing: >
+      "Make this module cohesive — one purpose per unit." / "These things
+      don't belong together; separate them."
+    anti_phrase: >
+      "Cohesion is symmetric: don't split parts that change together. Group
+      by responsibility, not by line count."
+
+  - term: single responsibility principle (SRP)
+    chapter: 4
+    definition: >
+      A unit should have one reason to change. The sharpest way to count
+      reasons is to count actors — the roles who could request a change.
+    why_it_matters: >
+      Multiple actors sharing one unit means any of them can break the
+      others by accident; SRP gives each a separate place to stand.
+    prompt_phrasing: >
+      "This does too much — split by responsibility, one reason to change
+      per unit. Group by actor."
+    anti_phrase: >
+      "Don't fragment into single-method classes; split only where parts
+      change for genuinely different reasons."
+
+  - term: one reason to change
+    chapter: 4
+    definition: >
+      The operational test for SRP: if you can name two distinct
+      circumstances (or actors) that would force a unit to change, it holds
+      more than one responsibility.
+    why_it_matters: >
+      Turns the fuzzy "does too much" into a countable check you (or your
+      agent) can apply to any function, class, or module.
+    prompt_phrasing: >
+      "How many reasons does this have to change? List the actors behind
+      each."
+    anti_phrase: >
+      "One reason, not zero-tolerance: a few closely-related changes from
+      the same actor are still one responsibility."
+
+  - term: god object
+    chapter: 4
+    definition: >
+      A class, module, or function that has accreted many unrelated
+      responsibilities and touches most of the system — the extreme of low
+      cohesion. Also: god function, god module.
+    why_it_matters: >
+      It is the single hardest kind of code to change safely, because every
+      concern is entangled with every other and tests must drag all of it in.
+    prompt_phrasing: >
+      "This is a god function — break it apart by responsibility."
+    anti_phrase: >
+      "The fix is cohesive modules, not a swarm of tiny classes that
+      recreate the tangle across ten files."
+
   - term: YAGNI
     chapter: 9
     definition: >
