@@ -974,3 +974,70 @@ terms:
     anti_phrase: >
       "Don't over-formalize a two-state toggle; reach for it when transitions
       are many and the illegal ones must be impossible."
+
+  - term: Iterator protocol
+    chapter: 15
+    definition: >
+      The language interface for sequential access to a collection's elements
+      without exposing its storage (__iter__/__next__ in Python;
+      [Symbol.iterator]/next in TypeScript), which `for` loops use behind the scenes.
+    why_it_matters: >
+      Lets callers traverse a container without coupling to how it stores its
+      data, so the storage can change without breaking the callers.
+    prompt_phrasing: >
+      "Make this iterable via the language protocol so callers loop over it
+      without seeing the internal list/array."
+    anti_phrase: >
+      "Don't hand-write an iterator class when a generator or the built-in
+      protocol does it; don't make a non-sequence iterable."
+
+  - term: generator
+    chapter: 15
+    definition: >
+      A function that produces values lazily with yield (Python) or function*
+      (TypeScript), implementing the iterator protocol while remembering where
+      it left off — the idiomatic Iterator.
+    why_it_matters: >
+      Replaces hand-written iterator classes and avoids building whole
+      sequences up front; ideal for streaming, batching, and large or infinite
+      traversals.
+    prompt_phrasing: >
+      "Use a generator (yield / function*) to stream these results lazily
+      instead of returning a full list."
+    anti_phrase: >
+      "Don't reach for a generator when a plain list is small and needed all at
+      once — laziness has its own cognitive cost."
+
+  - term: Visitor pattern
+    chapter: 15
+    definition: >
+      Represent an operation over a set of element types as a separate object,
+      using double dispatch (element.accept(visitor) -> visitor.visit_x) so new
+      operations are added without editing the element types.
+    why_it_matters: >
+      Makes adding operations cheap when the set of types is stable — the heart
+      of the Expression Problem — and keeps each operation in one place rather
+      than scattered across the nodes.
+    prompt_phrasing: >
+      "Add operations over this tree with the Visitor pattern: accept + double
+      dispatch, so the node classes never change per operation."
+    anti_phrase: >
+      "Use it only when types are stable and operations grow; if types change
+      more, prefer structural match / a discriminated-union switch."
+
+  - term: structural pattern matching
+    chapter: 15
+    definition: >
+      Dispatching on the shape of data: Python's match statement over dataclass
+      types, or a TypeScript discriminated-union switch with a `never`
+      exhaustiveness check — the modern replacement for classical Visitor.
+    why_it_matters: >
+      Removes the accept/visit ceremony, and in TypeScript turns a missed case
+      into a compile error, enforcing the completeness Visitor relied on
+      convention for.
+    prompt_phrasing: >
+      "Replace the Visitor with structural match (Python) / a discriminated
+      union + exhaustive switch (TypeScript)."
+    anti_phrase: >
+      "Adding a new node type means updating every match/switch — prefer
+      classical Visitor when node types, not operations, are what grow."

@@ -30,8 +30,8 @@ packages — not distributed-systems architecture.
 
 ## Status
 
-12 / 22 chapters drafted. Part I (Foundations) and Part II (Principles) are complete;
-Part III (Patterns) is in progress. See
+14 / 22 chapters drafted. Part I (Foundations), Part II (Principles), and Part III
+(Patterns) are complete. See
 [`docs/progress-tracking/chapters-writing-progress.md`](docs/progress-tracking/chapters-writing-progress.md).
 
 ## Tech stack

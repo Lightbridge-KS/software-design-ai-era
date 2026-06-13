@@ -37,8 +37,8 @@ case: Ch 4). Per-chapter loop: brief → editor approval → draft → gates →
 | 11 | Adapter and Façade | Structural | ✅ | PY+TS |
 | 12 | Composite and Decorator | Structural | ✅ | PY+TS |
 | 13 | Strategy and Template Method | Behavioral | ✅ | PY+TS |
-| 14 | Observer and State | Behavioral | ⬜ | — |
-| 15 | Iterator and Visitor | Behavioral | ⬜ | — |
+| 14 | Observer and State | Behavioral | ✅ | PY+TS |
+| 15 | Iterator and Visitor | Behavioral | ✅ | PY+TS |
 
 ## Part IV — Codebase Design
 
@@ -68,10 +68,10 @@ case: Ch 4). Per-chapter loop: brief → editor approval → draft → gates →
 
 ## Summary
 
-- **Drafted: 12 / 22 chapters** (Part I complete · Part II complete · Part III: 4/6).
-- **Next:** Ch 14 (Observer & State), then 15 → Part IV → Part V → appendices.
+- **Drafted: 14 / 22 chapters** (Part I complete · Part II complete · Part III complete 6/6).
+- **Next:** Part IV (16–18) → Part V (19–22) → appendices.
 - Writing order to date: 13 → 9 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 10 → 11
-  (then the multi-language refactor) → 12. Appendix A assembles from `glossary.yaml`.
+  (then the multi-language refactor) → 12 → 14 → 15. Appendix A assembles from `glossary.yaml`.
 
 ## Open editorial items (editor revisit)
 
