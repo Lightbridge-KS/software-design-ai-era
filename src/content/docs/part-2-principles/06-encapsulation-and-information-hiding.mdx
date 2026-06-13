@@ -3,7 +3,8 @@ title: "6. Encapsulation and Information Hiding"
 description: "A module's value is what it lets you ignore. Hide the implementation, narrow the public surface, and protect invariants — without ceremony."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -20,6 +21,9 @@ idea is simple: **a module's value is what it lets you ignore.**
 Here is a shopping cart, written the way objects often start — everything public,
 because it was easiest:
 
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 @dataclass
 class ShoppingCart:
@@ -32,8 +36,30 @@ class ShoppingCart:
         self.total = round(subtotal * (1 - self.discount_rate), 2)
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+class ShoppingCart {
+  items: LineItem[] = [];
+  discountRate = 0;
+  total = 0;
+
+  recompute(): void {
+    const subtotal = this.items.reduce((sum, item) => sum + item.price, 0);
+    this.total = Math.round(subtotal * (1 - this.discountRate) * 100) / 100;
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
+
 It works in the demo. In production it rots, because nothing stops a caller from
 breaking it:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 cart = ShoppingCart()
@@ -42,6 +68,20 @@ print(cart.total)                              # 0.00 — stale, and a lie
 cart.discount_rate = 2.0                        # 200% off, cheerfully accepted
 cart.recompute()                                # total is now negative (-12.50)
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+const cart = new ShoppingCart();
+cart.items.push({ name: "coffee", price: 12.5 }); // total now silently wrong
+console.log(cart.total);                           // 0 — stale, and a lie
+cart.discountRate = 2.0;                           // 200% off, cheerfully accepted
+cart.recompute();                                  // total is now negative (-12.50)
+```
+
+  </TabItem>
+</LangTabs>
 
 Every one of these lines is *allowed*, and that is the whole problem. The object
 holds an invariant — *`total` equals the discounted sum of `items`*, and *`discount_rate`
@@ -77,8 +117,10 @@ interfaces hiding real work are the target.)
 The cure is to hide the fields and expose only what callers legitimately need — a
 surface that makes the illegal states impossible to express.
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 @dataclass
@@ -93,7 +135,28 @@ class ShoppingCart:
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
+
+```typescript
+class ShoppingCart {
+  items: LineItem[] = [];
+  discountRate = 0;
+  total = 0;                          // caller must keep this in sync, by hand
+
+  recompute(): void {
+    const subtotal = this.items.reduce((sum, item) => sum + item.price, 0);
+    this.total = Math.round(subtotal * (1 - this.discountRate) * 100) / 100;
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 class ShoppingCart:
@@ -125,17 +188,58 @@ class ShoppingCart:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
+
+```typescript
+class ShoppingCart {
+  #items: LineItem[] = [];              // truly private — unreachable from outside
+  #discountRate = 0;
+
+  addItem(item: LineItem): void {
+    this.#items.push(item);
+  }
+
+  get items(): readonly LineItem[] {
+    return [...this.#items];            // readonly copy; can't corrupt us
+  }
+
+  get discountRate(): number {
+    return this.#discountRate;
+  }
+
+  set discountRate(rate: number) {
+    if (rate < 0 || rate > 1) {
+      throw new RangeError(`discountRate must be in [0, 1], got ${rate}`);
+    }
+    this.#discountRate = rate;
+  }
+
+  get total(): number {                 // computed on read — never stale
+    const subtotal = this.#items.reduce((sum, item) => sum + item.price, 0);
+    return Math.round(subtotal * (1 - this.#discountRate) * 100) / 100;
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 Now the three illegal states are not *forbidden* — they are *unrepresentable*.
 `total` has no setter, so it cannot be assigned a lie; it is computed on every read,
-so it cannot go stale. `discount_rate` rejects anything outside `[0, 1]`. `items`
-returns a tuple, so a caller mutating the result cannot reach the cart's real list.
-The interface shrank and the guarantees grew — the two moves of good encapsulation,
-together. The `examples/ch06/` tests assert exactly this: the before tests
-*demonstrate* each leak, and the after tests *prove* each one impossible.
+so it cannot go stale. `discount_rate` rejects anything outside `[0, 1]`. The item
+list is hidden, and what callers get back is a read-only view — a Python tuple, a
+TypeScript `readonly` copy — so mutating the result cannot reach the cart's real
+list. The interface shrank and the guarantees grew — the two moves of good
+encapsulation, together. The `examples/ch06/` tests assert exactly this: the before
+tests *demonstrate* each leak, and the after tests *prove* each one impossible.
 
-## Pythonic Notes
+## Language Notes
+
+The two languages enforce encapsulation with different tools — one social, one the
+compiler's — but the design judgment behind both is the same.
+
+<LangTabs>
+  <TabItem label="Python">
 
 Python has no `private` keyword. The single leading underscore — `_items` — is the
 **consenting-adults** convention: a sign that says "implementation detail, don't
@@ -155,14 +259,50 @@ immutable," a `frozen=True` dataclass turns a value object into something that
 cannot be altered after construction — the strongest encapsulation of all, because
 there is no mutation to guard.
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+TypeScript gives you a real wall where Python gives you a sign. A field named with a
+`#` — `#items` — is a **truly private** field: it is unreachable from outside the
+class, invisible to `Object.keys`, and a *syntax* error to access elsewhere. This is
+the genuine article, not the older `private` keyword, which is erased at compile time
+and leaves the field reachable at runtime. When you mean private, prefer `#`.
+
+```typescript
+class ShoppingCart {
+  #items: LineItem[] = [];          // no caller can reach this
+  get items(): readonly LineItem[] {
+    return [...this.#items];        // hand back a readonly copy, not the original
+  }
+  get total(): number { /* computed on read — no setter, so no lie */ }
+  set discountRate(rate: number) { /* validate on the way in */ }
+}
+```
+
+The protection comes from three tools used together. **`get`/`set` accessors** read
+like plain fields at the call site (`cart.total`) — TypeScript's uniform access — so
+a getter with no setter is a read-only property the type checker enforces. **`readonly`**
+marks a field or array view immutable; returning `readonly LineItem[]` (or a copy)
+stops a caller's `.push` from reaching your internals. And for whole values that
+should never change, **`Readonly<T>`** or an `as const` literal freezes the shape at
+the type level — the value-object move, the same intent as Python's `frozen`
+dataclass.
+
+> **Hand back copies or `readonly` views, never the live collection.** A getter that
+> returns `this.#items` directly leaks the private array; `[...this.#items]` or a
+> `readonly` view keeps the wall intact.
+
+  </TabItem>
+</LangTabs>
+
 ## When NOT to Use
 
 <Aside type="caution" title="Right-sizing">
 Chapter 9 named this failure mode: encapsulation curdling into getter/setter
-ceremony. A class with `get_name`/`set_name`, `get_price`/`set_price` for every field
-hides nothing — the setter accepts whatever the field would have — and adds a layer
-of noise that makes the simple look complicated. In Python that is strictly worse
-than a public attribute.
+ceremony. A class with a `getName`/`setName`, `getPrice`/`setPrice` pair for every
+field hides nothing — the setter accepts whatever the field would have — and adds a
+layer of noise that makes the simple look complicated. With uniform access in both
+languages, that is strictly worse than a plain public field.
 
 Encapsulation pays rent only when there is something to protect: an invariant to
 guard, or a decision likely to change. **A value object of plain public fields — a
@@ -188,10 +328,10 @@ encapsulation" often yields a wall of accessors. Aim between them.
 
 | You say | The agent hears |
 |---|---|
-| "Narrow the public API" | Expose only what callers need; hide the rest behind `_` |
+| "Narrow the public API" | Expose only what callers need; hide the rest (Python `_`, TS `#`) |
 | "Hide the implementation" | Put state behind behavior that guards its invariants |
 | "Make `total` a read-only property" | Compute on read; no setter, so it can't be set wrong |
-| "Make this immutable" | A `frozen` dataclass / value object — no mutation to guard |
+| "Make this immutable" | A value object with no setters — `frozen` dataclass / `readonly` fields, no mutation to guard |
 | "Is this module deep or shallow?" | Weigh hidden functionality against interface size |
 
 </VocabTable>
@@ -202,17 +342,18 @@ encapsulation" often yields a wall of accessors. Aim between them.
 
 This class exposes mutable state that lets callers reach illegal states. Identify its
 invariants, then narrow the public API so those states are unrepresentable: hide the
-raw fields behind `_`, expose computed values as read-only properties, and validate
-on the way in. Do **not** add getters and setters for fields that have no invariant —
-plain public attributes are fine for those.
+raw fields (Python `_`, TypeScript `#`), expose computed values as read-only
+properties, and validate on the way in. Do **not** add getters and setters for fields
+that have no invariant — plain public fields are fine for those.
 
 </PromptCard>
 
 <PromptCard title="Make it a value object">
 
-Turn this into an immutable value object: a `frozen=True` dataclass with no setters.
-If any field needs validation, do it in `__post_init__`. Keep it plain data — no
-behavior beyond what the value itself owns.
+Turn this into an immutable value object with no setters — a `frozen=True` dataclass
+in Python, `readonly` fields (or `Readonly<T>`) in TypeScript. If any field needs
+validation, enforce it at construction. Keep it plain data — no behavior beyond what
+the value itself owns.
 
 </PromptCard>
 
@@ -226,11 +367,12 @@ behavior beyond what the value itself owns.
 
 ### Agent failure modes
 
-- **Accessor ceremony.** Asked for encapsulation, the agent writes `get_`/`set_` pairs
-  for every field — Java in Python, hiding nothing. Counter: *use properties only
-  where there's an invariant; public attributes otherwise.*
-- **The leaked internal.** It returns `self._items` directly, so a caller's
-  `.append()` mutates the private list. Return a copy or a tuple.
+- **Accessor ceremony.** Asked for encapsulation, the agent writes a getter/setter
+  pair for every field — hiding nothing, since each setter just stores what the field
+  would have. Counter: *use properties only where there's an invariant; plain public
+  fields otherwise.*
+- **The leaked internal.** It returns the private list directly, so a caller's
+  `.append()` / `.push()` mutates it. Return a copy or a read-only view.
 - **The shallow wrapper.** It "encapsulates" by building a class that just forwards
   to the thing inside it — a bigger interface, no hidden work. That is a shallow
   module; ask what it actually hides.
@@ -239,10 +381,11 @@ behavior beyond what the value itself owns.
 
 </AICollab>
 
-<TryIt starter="examples/ch06/before.py">
+<TryIt starter="examples/ch06/py/before.py">
 
-Hand your agent the leaky `ShoppingCart` (or an object of your own with a dangerous
-setter) and run the **narrow-the-surface** prompt. Then probe the result from both
+Hand your agent the leaky `ShoppingCart` (Python: `examples/ch06/py/before.py` ·
+TypeScript: `examples/ch06/ts/before.ts`) — or an object of your own with a dangerous
+setter — and run the **narrow-the-surface** prompt. Then probe the result from both
 sides: can you still reach an illegal state (set a computed value, mutate a returned
 collection)? And did the agent over-correct into accessor ceremony around fields that
 never needed it? Our worked version, with tests that prove each illegal state
@@ -258,10 +401,12 @@ unreachable, is in `examples/ch06/`.
 - The test is one question: *can a caller reach a state this object should never be
   in?* Good encapsulation makes illegal states **unrepresentable**, not merely
   discouraged.
-- In Python, hide with the `_` convention (consenting adults — a signal, not a wall),
-  expose computed values with `@property`, and reach for `frozen` dataclasses to make
-  things immutable. **Don't write getters/setters up front** — upgrade a public
-  attribute to a property later, with no call site changing.
+- Each language has its own tools: Python hides with the `_` convention (consenting
+  adults — a signal, not a wall) and `@property`; TypeScript has truly private `#`
+  fields, `readonly`, and getters. Both expose computed values as read-only properties
+  and offer an immutable value-object form (`frozen` dataclass / `readonly` fields).
+  **Don't write getters/setters up front** — upgrade a public field to a property
+  later, with no call site changing.
 - A module's worth is its **depth**: much functionality behind a small interface
   (Ousterhout; Chapter 16). A narrow, honest surface is less for any reader — human
   or agent — to hold.
