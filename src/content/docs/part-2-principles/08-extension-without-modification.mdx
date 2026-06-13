@@ -3,7 +3,8 @@ title: "8. Extension Without Modification"
 description: "Add code, don't edit it. Open-Closed, code-to-the-interface, composition over inheritance, Liskov, and dependency inversion — the principles beneath Part III's patterns."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -21,6 +22,9 @@ friends.
 
 checkout-lite takes card and PayPal payments through one function:
 
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 def process_payment(method: str, amount: float) -> Receipt:
     if method == "card":
@@ -30,6 +34,25 @@ def process_payment(method: str, amount: float) -> Receipt:
     else:
         raise ValueError(f"unknown payment method: {method}")
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+function processPayment(method: string, amount: number): Receipt {
+  switch (method) {
+    case "card":
+      return { provider: "card", amount, confirmation: "..." };
+    case "paypal":
+      return { provider: "paypal", amount, confirmation: "..." };
+    default:
+      throw new Error(`unknown payment method: ${method}`);
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 Today the requirement is crypto. So you open `process_payment` — the most
 safety-critical function in the system, the one that moves money — and add a branch.
@@ -85,8 +108,10 @@ the promise is a bug wearing a valid type.
 
 ## Before / After
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def process_payment(method: str, amount: float) -> Receipt:
@@ -99,7 +124,28 @@ def process_payment(method: str, amount: float) -> Receipt:
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
+
+```typescript
+function processPayment(method: string, amount: number): Receipt {
+  switch (method) {
+    case "card":
+      return { provider: "card", amount, confirmation: `card-${Math.round(amount * 100)}` };
+    case "paypal":
+      return { provider: "paypal", amount, confirmation: `pp-${Math.round(amount * 100)}` };
+    default:
+      throw new Error(`unknown payment method: ${method}`);
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 from abc import ABC, abstractmethod
@@ -122,7 +168,34 @@ def process_payment(gateway: IPaymentGateway, amount: float) -> Receipt:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
+
+```typescript
+// We own both sides, so we declare an interface and `implements` it for intent —
+// though TS, being structural, would accept a matching class without the keyword.
+interface IPaymentGateway {
+  charge(amount: number): Receipt; // postcondition: a Receipt for that amount
+}
+
+class CardGateway implements IPaymentGateway {
+  charge(amount: number): Receipt {
+    return { provider: "card", amount, confirmation: `card-${Math.round(amount * 100)}` };
+  }
+}
+
+class PayPalGateway implements IPaymentGateway {
+  charge(amount: number): Receipt {
+    return { provider: "paypal", amount, confirmation: `pp-${Math.round(amount * 100)}` };
+  }
+}
+
+function processPayment(gateway: IPaymentGateway, amount: number): Receipt {
+  return gateway.charge(amount); // never edited again, whatever you add
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 Adding crypto is now a new class implementing `IPaymentGateway` — `process_payment`
 is never touched. The `examples/ch08/` tests prove it literally: a `CryptoGateway`
@@ -137,8 +210,10 @@ provider whose SDK doesn't match your interface. They are all this principle, na
 
 ## Choosing: ABC vs. `Protocol`
 
-The interface above is an **abstract base class** — a gateway must explicitly inherit
-`IPaymentGateway`. Python offers a second way to declare an interface, the
+This is a **Python-side decision** — and it is worth meeting head-on, because the two
+languages in this book disagree about whether it even exists. In Python you must
+*choose*. The interface above is an **abstract base class** — a gateway must explicitly
+inherit `IPaymentGateway`. Python offers a second way to declare an interface, the
 **`Protocol`**, which matches by *shape* rather than by name: anything with a
 compatible `charge` method satisfies it, with no inheritance at all. Which to use is a
 real decision, and this book settles it with one rule:
@@ -154,7 +229,22 @@ foreign class fits the moment it has the right shape, untouched. This is why
 `Protocol` shines in Chapter 11's Adapter, where the whole job is making code you
 don't own fit an interface you do.
 
-## Pythonic Notes
+In TypeScript there is no such fork in the road, because **interfaces are structural by
+default**. A class satisfies an `interface` whether or not it writes `implements`, and
+a foreign object with the right shape just works — TS's lone `interface` does the job of
+*both* the ABC and the `Protocol` at once. So the decision the rule above settles for
+Python simply doesn't arise; `implements` is an optional note of intent, not the thing
+that makes the type fit. The design idea — *code to the interface* — is identical in
+both languages; only the question of how conformance is established differs.
+
+## Language Notes
+
+Both languages reach the same seam — code to an abstraction, inject what you have —
+but they get there with different machinery, and the differences are themselves the
+lesson.
+
+<LangTabs>
+  <TabItem label="Python">
 
 The lightest interface in Python is not a class at all — it's a `Callable`. When the
 abstraction has a single method, a function *is* the interface, and "inject an
@@ -169,6 +259,45 @@ seam"). And a duck-typing caveat: Python will not *enforce* Liskov or
 code-to-the-interface for you — a subtype that breaks the contract still runs. These
 are disciplines; a `Protocol` plus a type checker is how you make them visible before
 runtime does.
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+TypeScript collapses the choice Python makes you weigh: **interfaces are structural by
+default.** Declare `interface IPaymentGateway { charge(amount: number): Receipt }` once
+and it serves as both the ABC and the `Protocol` — a class with the right shape fits it
+*whether or not* it writes `implements`, and so does a plain object literal you never
+wrote a class for:
+
+```typescript
+interface IPaymentGateway {
+  charge(amount: number): Receipt;
+}
+
+// No `implements`, inherits nothing of ours — yet assignable by shape alone.
+class InHouseGateway {
+  charge(amount: number): Receipt {
+    return { provider: "inhouse", amount, confirmation: `ih-${Math.round(amount * 100)}` };
+  }
+}
+
+// A foreign object with no class at all fits too — structural typing in action.
+const wallet: IPaymentGateway = {
+  charge: (amount) => ({ provider: "wallet", amount, confirmation: `w-${amount}` }),
+};
+```
+
+So `implements` in TypeScript is a *note of intent*, not the thing that makes the type
+fit — it earns you a clearer compiler error when you forget a method, nothing more.
+Write it on classes you own for documentation; rely on the structural match for foreign
+shapes (the Adapter move, Chapter 11). Composition is just as lightweight: a constructor
+parameter *is* the injection — `new Checkout(gateway)` hands the dependency in, no
+framework required. And Liskov is the same contract idea word for word: a subtype that
+type-checks but returns the wrong thing at runtime is a bug wearing a valid type, which
+is why the chapter's tests run every substitute through one shared contract.
+
+  </TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -266,15 +395,16 @@ a different type, or raises an exception the base doesn't promise.
 
 </AICollab>
 
-<TryIt starter="examples/ch08/before.py">
+<TryIt starter="examples/ch08/py/before.py">
 
-Take the `if/elif` `process_payment` (or a type-switch of your own) and run the
-**make-it-open-closed** prompt. Verify the payoff the chapter promised: can you add a
-brand-new implementation without touching the core function? Then push on the two
-failure directions — did the agent extract an interface that has only one
+Take the `if/elif` (or `switch`) `process_payment` and run the
+**make-it-open-closed** prompt (starter — Python: `examples/ch08/py/before.py` ·
+TypeScript: `examples/ch08/ts/before.ts`). Verify the payoff the chapter promised: can
+you add a brand-new implementation without touching the core function? Then push on the
+two failure directions — did the agent extract an interface that has only one
 implementation (premature), and would a deliberately broken subtype (one that returns
-the wrong thing) pass the same contract test the good ones do? Our worked version,
-with the OCP and Liskov tests, is in `examples/ch08/`.
+the wrong thing) pass the same contract test the good ones do? Our worked version, with
+the OCP and Liskov tests, is in `examples/ch08/` (`py/` and `ts/`).
 
 </TryIt>
 
