@@ -1,7 +1,6 @@
 # Chapter Writing Progress
 
-Drafting status for every chapter + appendix. Companion to
-`multi-language-refactor-progress.md` (which tracked the Python→Python+TS conversion).
+Drafting status for every chapter + appendix.
 
 **Legend:** ✅ drafted · 🚧 in progress · ⬜ stub (frontmatter + TODO only)
 **Languages:** PY = Python-reference (Part I) · PY+TS = dual-language (synced `<LangTabs>`)

@@ -11,14 +11,14 @@ Full design document: `docs/book-design-software-design-for-humans-and-ai.md`.
 - **Human role:** editor-in-chief. The AI drafts; the human approves, redirects, and
   has the last word.
 
-> **North star — read `VISION.md` first.** The book is going **multi-language**:
-> patterns and principles are the constants, the **language is the variable**. Python
-> is the reference idiom (the chapters drafted so far are the Python tab); **TypeScript**
-> is added per chapter via Starlight synced Tabs (the `<LangTabs>` component). One fixed
-> domain spine (checkout-lite); no domain themes. The multi-language refactor is **in
-> progress** — see `docs/progress-tracking/multi-language-refactor-progress.md`. Part I
-> (Ch 1–3) stays Python-reference; full Python+TypeScript parallel from Part II onward.
-> The rules below already reflect the multi-language structure.
+> **North star — read `VISION.md` first.** The book is **multi-language**: patterns and
+> principles are the constants, the **language is the variable**. Python is the reference
+> idiom; **TypeScript** is the parallel track via Starlight synced Tabs (the `<LangTabs>`
+> component). One fixed domain spine (checkout-lite); no domain themes. Part II+III
+> chapters are dual-language; **Part I (Ch 1–3) stays Python-reference**; new chapters are
+> authored dual-language from the start. Drafting status:
+> `docs/progress-tracking/chapters-writing-progress.md`. The rules below reflect the
+> multi-language structure.
 
 ## Settled Editorial Decisions
 
