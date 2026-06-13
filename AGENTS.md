@@ -11,6 +11,15 @@ Full design document: `docs/book-design-software-design-for-humans-and-ai.md`.
 - **Human role:** editor-in-chief. The AI drafts; the human approves, redirects, and
   has the last word.
 
+> **North star — read `VISION.md` first.** The book is going **multi-language**:
+> patterns and principles are the constants, the **language is the variable**. Python
+> is the reference idiom (the chapters drafted so far are the Python tab); **TypeScript**
+> is added per chapter via Starlight synced Tabs. One fixed domain spine (checkout-lite);
+> no domain themes. The multi-language refactor — of the existing chapters, the
+> Python-specific Code/Structure rules below, and the template — is **deferred but
+> committed**; new structural work should assume the multi-language structure described
+> in `VISION.md`.
+
 ## Settled Editorial Decisions
 
 These were decided by the editor — do not relitigate without being asked:
