@@ -3,7 +3,8 @@ title: "10. Creating Objects: Factories and Singleton"
 description: "Centralize the knowledge of what to build behind a factory function and a registry — and why the Singleton is usually a module-level instance in disguise."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -20,8 +21,11 @@ registration, not an edit.**
 
 ## The Itch
 
-Chapter 8 left checkout-lite injecting an `IPaymentGateway`, so `process_payment`
+Chapter 8 left checkout-lite injecting an `IPaymentGateway`, so the payment step
 never has to change. Progress — but look at the code that calls it:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def checkout(method: str, amount: float) -> Receipt:
@@ -33,6 +37,26 @@ def checkout(method: str, amount: float) -> Receipt:
         raise ValueError(f"unknown payment method: {method}")
     return gateway.charge(amount)
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+function checkout(method: string, amount: number): Receipt {
+  let gateway: IPaymentGateway;
+  if (method === "card") {
+    gateway = new CardGateway();
+  } else if (method === "paypal") {
+    gateway = new PayPalGateway();
+  } else {
+    throw new Error(`unknown payment method: ${method}`);
+  }
+  return gateway.charge(amount);
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 The dispatch we removed from `process_payment` just moved up one level — and it
 breeds. The refund flow has the same `if/elif`. So does the admin tool. So does the
@@ -48,11 +72,12 @@ What we want is one place that owns construction:
 - Adding a provider is *registering* it, not editing call sites.
 - Callers ask for a gateway by key and receive one, never naming a concrete class.
 
-That place is a **factory**. In its Pythonic form it is not a class or a framework —
-it is a function backed by a **registry dict** (the same registry idea from the
-Strategy chapter, now pointed at construction). The insight that makes it tiny:
-**a class is already a callable that constructs an instance**, so a dict whose values
-are classes *is* a factory.
+That place is a **factory**. In its lightest form it is not a class or a framework —
+it is a function backed by a **registry** (the same registry idea from the Strategy
+chapter, now pointed at construction): a Python `dict` or a TypeScript `Record`
+mapping each key to a way of building the thing. The insight that makes it tiny:
+**a class is already a callable that constructs an instance**, so a table whose values
+are constructors *is* a factory.
 
 ```mermaid
 classDiagram
@@ -76,8 +101,12 @@ wants.
 
 ## Before / After
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+The construction switch, copied across every call site that needs a gateway:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def checkout(method: str, amount: float) -> Receipt:
@@ -100,7 +129,43 @@ def refund(method: str, amount: float) -> Receipt:
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
+
+```typescript
+function checkout(method: string, amount: number): Receipt {
+  let gateway: IPaymentGateway;
+  if (method === "card") {
+    gateway = new CardGateway();
+  } else if (method === "paypal") {
+    gateway = new PayPalGateway();
+  } else {
+    throw new Error(`unknown payment method: ${method}`);
+  }
+  return gateway.charge(amount);
+}
+
+function refund(method: string, amount: number): Receipt {
+  let gateway: IPaymentGateway;
+  if (method === "card") {           // the same switch, copied
+    gateway = new CardGateway();
+  } else if (method === "paypal") {
+    gateway = new PayPalGateway();
+  } else {
+    throw new Error(`unknown payment method: ${method}`);
+  }
+  return gateway.charge(-amount);
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+One registry owns construction; every call site asks the factory by key:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 from collections.abc import Callable
@@ -112,7 +177,7 @@ _GATEWAYS: dict[str, Callable[[], IPaymentGateway]] = {
 
 def make_gateway(method: str) -> IPaymentGateway:
     try:
-        return _GATEWAYS[method]()
+        return _GATEWAYS[method]()       # a class is already a callable
     except KeyError:
         raise ValueError(f"unknown payment method: {method}") from None
 
@@ -124,13 +189,40 @@ def refund(method: str, amount: float) -> Receipt:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
 
-The construction knowledge now lives in `_GATEWAYS`, once. Adding Apple Pay is one
-line in the registry; no call site changes. The `examples/ch10/` tests prove the
-growth point literally: a `CryptoGateway` registered with a single dict entry is
-immediately buildable through `make_gateway`, and an unknown method fails fast with a
-located error (Chapter 7).
+```typescript
+// Map each key to a thunk that builds the concrete gateway.
+const GATEWAYS: Record<string, () => IPaymentGateway> = {
+  card: () => new CardGateway(),
+  paypal: () => new PayPalGateway(),
+};
+
+function makeGateway(method: string): IPaymentGateway {
+  const build = GATEWAYS[method];
+  if (build === undefined) {
+    throw new Error(`unknown payment method: ${method}`); // unknown -> fail fast
+  }
+  return build();
+}
+
+function checkout(method: string, amount: number): Receipt {
+  return makeGateway(method).charge(amount);
+}
+
+function refund(method: string, amount: number): Receipt {
+  return makeGateway(method).charge(-amount);
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+The construction knowledge now lives in one registry. Adding Apple Pay is one line in
+that table; no call site changes. The `examples/ch10/` tests prove the growth point
+literally: a `CryptoGateway` registered with a single entry is immediately buildable
+through the factory, and an unknown method fails fast with a located error
+(Chapter 7).
 
 ### The other two factory shapes
 
@@ -140,6 +232,9 @@ variants exist for when it doesn't:
 **Factory Method** — when a *class hierarchy* should each decide what to build. A base
 class calls an overridable method to create its collaborator, and subclasses supply
 the concrete type:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 class Checkout(ABC):
@@ -153,6 +248,28 @@ class CardCheckout(Checkout):
     def make_gateway(self) -> IPaymentGateway:
         return CardGateway()
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+abstract class Checkout {
+  protected abstract makeGateway(): IPaymentGateway; // the factory method
+
+  run(amount: number): Receipt {
+    return this.makeGateway().charge(amount); // uses it without naming a type
+  }
+}
+
+class CardCheckout extends Checkout {
+  protected makeGateway(): IPaymentGateway {
+    return new CardGateway();
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 Reach for it only when you already have the hierarchy for other reasons — otherwise
 it is a class ceremony around what a function does in one line.
@@ -186,9 +303,12 @@ because global state feels convenient. It rarely is: a Singleton is global mutab
 state by another name, it hides dependencies (code that uses it doesn't declare it),
 and it fights testing, because you can't swap the one instance for a fake.
 
-Python makes the whole pattern mostly unnecessary, because **a module is already a
-singleton** — imported once, cached, shared by every importer. So the Pythonic "one
-instance" is just a module-level object:
+Both our languages make the whole pattern mostly unnecessary, because **a module is
+already a singleton** — evaluated once, cached, and shared by every importer. So the
+idiomatic "one instance" is just a module-level object:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # pool.py
@@ -198,12 +318,33 @@ pool = GatewayPool()          # created once, importable everywhere
 from pool import pool         # the same instance, no machinery
 ```
 
-This gives you the single shared instance with none of the `__new__` or metaclass
-ceremony — and, crucially, you can still inject `pool` as a parameter in tests to
-substitute a fake. When your agent writes a `Singleton` metaclass, that is the push:
-*"use a module-level instance, and inject it where it's used."*
+  </TabItem>
+  <TabItem label="TypeScript">
 
-## Pythonic Notes
+```typescript
+// pool.ts
+export const pool = new GatewayPool(); // evaluated once, importable everywhere
+
+// elsewhere
+import { pool } from "./pool";          // the same instance, no machinery
+```
+
+  </TabItem>
+</LangTabs>
+
+This gives you the single shared instance with none of the ceremony — no `__new__` or
+metaclass in Python, no private-constructor / `static instance` dance in TypeScript —
+and, crucially, you can still inject `pool` as a parameter in tests to substitute a
+fake. When your agent reaches for a `Singleton` class, that is the push: *"use a
+module-level instance, and inject it where it's used."*
+
+## Language Notes
+
+Both languages reach the same factory from the same insight — a class is a callable —
+but each has its own escape hatches for the construction key and the lazy instance.
+
+<LangTabs>
+  <TabItem label="Python">
 
 The registry-of-classes is the whole trick: `{"card": CardGateway}` plus
 `registry[key]()` is a complete factory, because the class is the constructor. You
@@ -215,14 +356,38 @@ typo'd string in the first place. For the singleton case, a module-level instanc
 the first reach; `functools.lru_cache` on a factory function is a close second when
 construction is expensive and you want it lazy.
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+The same trick holds, with one wrinkle: a class in TypeScript is a callable too, but
+you build with `new`, so the registry stores **constructor thunks** —
+`{ card: () => new CardGateway() }` — and `registry[key]?.()` builds one. (A bare
+class reference `{ card: CardGateway }` works as a `new`-able value too, but the
+thunk reads uniformly whether the entry is a class or a plain factory function.)
+Because `strict` mode flags `noUncheckedIndexedAccess`, a `Record` lookup is
+`T | undefined` — that `undefined` check *is* your fail-fast, exactly where the
+Python version catches `KeyError`.
+
+When the set of keys is genuinely closed, a **discriminated union** is TypeScript's
+other answer: a `switch` over a `kind` field that the compiler checks for
+exhaustiveness. It is type-safe but, like Python's `match`, must be *edited* to add a
+case — choose it when the variants are fixed, the registry when they grow. For the
+lazy singleton, wrap construction in a memoized getter:
+`let cached: Pool | undefined; const getPool = () => (cached ??= new Pool());` — the
+`??=` is `lru_cache` in one operator.
+
+  </TabItem>
+</LangTabs>
+
 ## When NOT to Use
 
 <Aside type="caution" title="Right-sizing">
 Factories are the pattern agents most over-apply, and Chapter 9 named the smell
 outright: *a factory that can only ever produce one type.* If there is one concrete
-class and no second on the horizon, `CardGateway()` at the call site is the right
-code — a factory adds a layer of indirection that buys nothing. Wait for two or more
-types chosen at runtime from data before centralizing.
+class and no second on the horizon, constructing it directly at the call site
+(`CardGateway()` / `new CardGateway()`) is the right code — a factory adds a layer of
+indirection that buys nothing. Wait for two or more types chosen at runtime from data
+before centralizing.
 
 **Abstract Factory** is the high-ceremony end of this and the easiest to over-reach
 for: it pays only when a genuine *family* must stay internally consistent. Demand to
@@ -235,7 +400,7 @@ manage, construction is just a constructor call.
 ## 🤖 AI Collaboration
 
 Construction is where agents reach for ceremony fastest — a `FooFactory` class, a
-`Singleton` metaclass, an abstract factory for a single product. Most of your work
+`Singleton` class, an abstract factory for a single product. Most of your work
 here is keeping the solution the size of the problem.
 
 <AICollab>
@@ -246,7 +411,7 @@ here is keeping the solution the size of the problem.
 
 | You say | The agent hears |
 |---|---|
-| "Use a factory function backed by a registry dict" | Centralize construction; a dict of classes, not a Factory class |
+| "Use a factory function backed by a registry" | Centralize construction; a `dict` / `Record` of constructors, not a Factory class |
 | "Adding a provider should be one registration" | The registry is the single growth point (open-closed) |
 | "Use Factory Method here" | A hierarchy decides its own type via an overridable method |
 | "Don't build an Abstract Factory without a real family" | No family of consistent objects → no abstract factory |
@@ -258,18 +423,18 @@ here is keeping the solution the size of the problem.
 
 <PromptCard title="Centralize construction">
 
-This `if/elif` that builds a [gateway/handler] from a string is duplicated across
-call sites. Replace it with a **factory function backed by a registry dict** (map the
-key to the class — a class is already a callable). Adding a type should be one registry
-entry. Raise a `ValueError` on an unknown key. Don't introduce a Factory class.
+This conditional chain that builds a [gateway/handler] from a string is duplicated
+across call sites. Replace it with a **factory function backed by a registry** (map
+the key to a constructor — a class is already a callable). Adding a type should be one
+registry entry. Fail fast on an unknown key. Don't introduce a Factory class.
 
 </PromptCard>
 
-<PromptCard title="One instance, the Pythonic way">
+<PromptCard title="One instance, no Singleton class">
 
 We need a single shared [pool/config]. Use a **module-level instance**, not a
-Singleton class or metaclass, and make it injectable as a parameter so tests can pass
-a fake. Explain how the module already guarantees one instance.
+Singleton class, and make it injectable as a parameter so tests can pass a fake.
+Explain how the module already guarantees one instance.
 
 </PromptCard>
 
@@ -277,32 +442,32 @@ a fake. Explain how the module already guarantees one instance.
 
 - [ ] Is there more than one concrete type, chosen at runtime? (else: no factory)
 - [ ] Is construction centralized — one place to add a provider?
-- [ ] Is the registry the growth point, not an `if/elif` or a `match`?
-- [ ] Any `Singleton` class/metaclass where a module-level instance would do?
+- [ ] Is the registry the growth point, not a conditional chain or a closed `match`/`switch`?
+- [ ] Any `Singleton` class where a module-level instance would do?
 - [ ] Any Abstract Factory without a real, consistency-bound family?
 
 ### Agent failure modes
 
 - **The one-product factory.** A `Factory` class with a single `create` returning one
   type — indirection with no payoff (Chapter 9's named smell).
-- **The Singleton reflex.** A `Singleton` metaclass for shared state: global, hidden,
+- **The Singleton reflex.** A `Singleton` class for shared state: global, hidden,
   untestable. Counter with the module-level instance.
 - **Speculative Abstract Factory.** A family-creator for what is really one object.
   Ask to see the family.
-- **The `match` that isn't open.** Dispatch via `match`/`if` instead of a registry, so
-  every new type still edits the function.
+- **The dispatch that isn't open.** A closed `match`/`switch` instead of a registry,
+  so every new type still edits the function.
 
 </AICollab>
 
-<TryIt starter="examples/ch10/before.py">
+<TryIt starter="examples/ch10/py/before.py">
 
-Take the duplicated construction switch in `before.py` (or a `build_*` if/elif of your
-own) and run the **centralize-construction** prompt. Check the payoff: is adding a new
-type genuinely one registry entry, with no call site touched? Then probe the two
-over-reaches — did the agent wrap it in a `Factory` class it didn't need, and if a
-"single instance" came up anywhere, did it reach for a Singleton instead of a
-module-level object? Our worked factory and the singleton contrast, with tests, are in
-`examples/ch10/`.
+Take the duplicated construction switch in `before.py` (Python:
+`examples/ch10/py/before.py` · TypeScript: `examples/ch10/ts/before.ts`) and run the
+**centralize-construction** prompt. Check the payoff: is adding a new type genuinely
+one registry entry, with no call site touched? Then probe the two over-reaches — did
+the agent wrap it in a `Factory` class it didn't need, and if a "single instance"
+came up anywhere, did it reach for a Singleton instead of a module-level object? Our
+worked factory and the singleton contrast, with tests, are in `examples/ch10/`.
 
 </TryIt>
 
@@ -330,6 +495,9 @@ classDiagram
 
 **Intent:** centralize the choice of *which concrete type to build*, so callers
 depend on an interface and adding a type doesn't edit them.
+
+<LangTabs>
+  <TabItem label="Python">
 
 **Canonical** — Factory Method, the form your agent emits:
 
@@ -361,17 +529,60 @@ def make_product(kind: str) -> Product:
     return _PRODUCTS[kind]()   # a class is already a callable
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+**Canonical** — Factory Method, the form your agent emits:
+
+```typescript
+abstract class Creator {
+  protected abstract factoryMethod(): Product;
+  operation(): string {
+    return this.factoryMethod().operation(); // uses product, not its type
+  }
+}
+
+class CreatorA extends Creator {
+  protected factoryMethod(): Product { return new ConcreteProductA(); }
+}
+
+class CreatorB extends Creator {
+  protected factoryMethod(): Product { return new ConcreteProductB(); }
+}
+```
+
+**Idiomatic** — a record of constructor thunks *is* the factory:
+
+```typescript
+const PRODUCTS: Record<string, () => Product> = {
+  a: () => new ConcreteProductA(),
+  b: () => new ConcreteProductB(),
+};
+
+function makeProduct(kind: string): Product {
+  const build = PRODUCTS[kind];               // a class is already a callable
+  if (!build) throw new Error(`unknown product: ${kind}`);
+  return build();
+}
+```
+
+  </TabItem>
+</LangTabs>
+
 **Reach for it when** ≥2 concrete types are chosen at runtime from data ·
 **not when** there's one type (just construct it) or you'd wrap a single product
 in a `Factory` class. Family of consistent objects → Abstract Factory.
-Runnable: `examples/ch10/concept_factory.py`.
+Runnable: `examples/ch10/py/concept_factory.py` · `examples/ch10/ts/conceptFactory.ts`.
 
 </CheatSheet>
 
 <CheatSheet pattern="Singleton (demoted)">
 
-**Intent:** guarantee one shared instance. In Python, almost always reach for a
-module-level object instead of the pattern.
+**Intent:** guarantee one shared instance. In both languages, almost always reach for
+a module-level object instead of the pattern.
+
+<LangTabs>
+  <TabItem label="Python">
 
 **Canonical** — the Singleton pattern (rarely needed):
 
@@ -391,9 +602,35 @@ class Singleton:
 config = Config()          # created once, imported everywhere, injectable in tests
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+**Canonical** — the Singleton pattern (rarely needed):
+
+```typescript
+class Singleton {
+  private static instance: Singleton | undefined;
+  private constructor() {}
+  static getInstance(): Singleton {
+    return (Singleton.instance ??= new Singleton());
+  }
+}
+```
+
+**Idiomatic** — an ES module is already a singleton:
+
+```typescript
+// config.ts
+export const config = new Config(); // evaluated once, imported everywhere, injectable
+```
+
+  </TabItem>
+</LangTabs>
+
 **Reach for it when** … almost never — prefer the module-level instance ·
-**not when** you'd add a metaclass/`__new__` for global state you could inject.
-Runnable: `examples/ch10/concept_singleton.py`.
+**not when** you'd add ceremony (`__new__`/metaclass or a private constructor) for
+global state you could inject.
+Runnable: `examples/ch10/py/concept_singleton.py` · `examples/ch10/ts/conceptSingleton.ts`.
 
 </CheatSheet>
 
@@ -401,12 +638,14 @@ Runnable: `examples/ch10/concept_singleton.py`.
 
 - Injection (Chapter 8) decides *what to use*; a **factory** decides *what to build* —
   and centralizes that knowledge so adding a type is a registration, not an edit.
-- The Pythonic factory is a **function plus a registry dict** of classes — a class is
-  already a callable, so no `Factory` class is needed. Factory Method (a hierarchy
-  picks its type) and Abstract Factory (a consistent family) are the rarer variants;
-  reach for them only on evidence.
-- The **Singleton** is demoted on purpose: a module is already a singleton, so prefer a
-  **module-level instance** you can inject — not a Singleton class with global reach.
+- The lightest factory is a **function plus a registry** of constructors — a Python
+  `dict` of classes, a TypeScript `Record` of `new`-thunks. A class is already a
+  callable, so no `Factory` class is needed. Factory Method (a hierarchy picks its
+  type) and Abstract Factory (a consistent family) are the rarer variants; reach for
+  them only on evidence.
+- The **Singleton** is demoted on purpose: a module is already a singleton in both
+  languages, so prefer a **module-level instance** you can inject — not a Singleton
+  class with global reach.
 - Right-size hardest here: a factory for one product, or an abstract factory without a
   family, is creational ceremony. When there is nothing to manage, just call the
   constructor.
