@@ -249,6 +249,72 @@ terms:
       "The fix is cohesive modules, not a swarm of tiny classes that
       recreate the tangle across ten files."
 
+  - term: coupling
+    chapter: 5
+    definition: >
+      How much one unit must know about another to do its job. A ladder from
+      data coupling (pass the value) to stamp coupling (pass the object) to
+      content coupling (reach into internals — the train wreck).
+    why_it_matters: >
+      Knowledge is coupling: code that knows another unit's shape breaks when
+      that shape changes. It is Chapter 2's second master metric, and the
+      price of Chapter 4's cohesion.
+    prompt_phrasing: >
+      "Reduce the coupling here." / "Pass the value, not the whole object."
+    anti_phrase: >
+      "Coupling is never zero — collaborators must share something; aim for
+      the loosest rung that still works, not an interface for everything."
+
+  - term: Law of Demeter (Principle of Least Knowledge)
+    chapter: 5
+    definition: >
+      Talk only to your immediate friends, not to friends-of-friends. A
+      chain of dots through distinct owners (a.b().c().d()) — a "train
+      wreck" — is the tell-tale violation.
+    why_it_matters: >
+      A unit that reaches through an object graph is coupled to the shape of
+      every object on the path; one distant change breaks it (and its copies).
+    prompt_phrasing: >
+      "This is a train wreck — fix the Law of Demeter violation by adding a
+      method on the object that owns the data."
+    anti_phrase: >
+      "Not every dot is a violation; count owners, not dots. Don't grow
+      pass-through wrappers at every level — a deep chain may mean the graph
+      should be flattened."
+
+  - term: tell, don't ask
+    chapter: 5
+    definition: >
+      Don't pull an object's data out to make a decision about that object;
+      tell the object and let it decide. Asking couples you to the data;
+      telling couples you to a question.
+    why_it_matters: >
+      Keeps the decision with the data it concerns, so the knowledge of how
+      that data is shaped stays in one place.
+    prompt_phrasing: >
+      "Refactor this ask-then-decide block to tell-don't-ask: put the
+      decision on the object as a method or property."
+    anti_phrase: >
+      "Only when the decision is about that object's own state — don't pile
+      another actor's behavior onto a data class and recreate a god object."
+
+  - term: dependency direction
+    chapter: 5
+    definition: >
+      The way a dependency arrow points: when A imports B, B can break A but
+      not the reverse. The rule is to depend toward stability — stable cores
+      should not depend on volatile details — and never form a cycle.
+    why_it_matters: >
+      Wrong-way arrows let volatile code (I/O, formats, frameworks) break the
+      stable core; right-way arrows keep the core testable and durable.
+    prompt_phrasing: >
+      "Which way should this dependency point? The core shouldn't depend on
+      I/O."
+    anti_phrase: >
+      "Fixing direction isn't the same as inverting it — don't add an
+      abstraction to invert a dependency that has no reason to be inverted
+      (that's Chapter 8, and only when earned)."
+
   - term: YAGNI
     chapter: 9
     definition: >
