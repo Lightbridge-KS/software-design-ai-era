@@ -377,6 +377,104 @@ terms:
       "Not everything should be frozen — objects with a genuine lifecycle
       (a cart filling up, an order changing state) need controlled mutation."
 
+  - term: Principle of Least Astonishment
+    chapter: 7
+    definition: >
+      Code should behave the way a reasonable reader of its name and
+      signature expects. Astonishment is the gap between the promise a name
+      makes and what the code actually does.
+    why_it_matters: >
+      Bugs that live in that gap hide in plain sight — the code reads
+      correctly and does something else.
+    prompt_phrasing: >
+      "This name is misleading — the behavior doesn't match the promise.
+      Rename it or split it."
+    anti_phrase: >
+      "Least astonishment means matching reasonable expectations, not
+      dumbing every function down to one trivial line."
+
+  - term: precondition
+    chapter: 7
+    definition: >
+      What must be true for a call to be valid — the caller's
+      responsibility (e.g. 0 <= percent <= 100).
+    why_it_matters: >
+      Stated and checked at the boundary, a precondition turns a silent
+      wrong answer into a loud, located failure.
+    prompt_phrasing: >
+      "Add a precondition that fails fast: raise a ValueError on invalid
+      input at the boundary."
+    anti_phrase: >
+      "Check preconditions where untrusted input enters — not on every
+      internal helper that only sees validated data."
+
+  - term: postcondition
+    chapter: 7
+    definition: >
+      What a function guarantees to be true of its result on return — its
+      own responsibility (e.g. the result is non-negative and rounded).
+    why_it_matters: >
+      Makes the function's guarantee explicit and checkable, so a violation
+      is caught as a bug in the function, not downstream.
+    prompt_phrasing: >
+      "State and assert the postcondition: what must always be true of the
+      return value?"
+    anti_phrase: >
+      "A postcondition you assert should be about your own logic — if it can
+      fail from bad input, that's a precondition, and needs a raise."
+
+  - term: invariant
+    chapter: 7
+    definition: >
+      A condition that stays true throughout — across a loop, or across an
+      object's whole lifetime (e.g. a cart's total always equals its
+      discounted items).
+    why_it_matters: >
+      Naming the invariant tells you what every change must preserve; it is
+      the thing encapsulation (Chapter 6) exists to protect.
+    prompt_phrasing: >
+      "What's the invariant here, and does every method preserve it?"
+    anti_phrase: >
+      "Guard the invariant at the object's boundary, not with an assert in
+      every method that can't actually violate it."
+
+  - term: fail fast
+    chapter: 7
+    definition: >
+      When a precondition is violated, stop immediately at the boundary with
+      an error that names its cause — rather than returning a
+      plausible-but-wrong value that fails far away.
+    why_it_matters: >
+      The distance between a bug and its symptom is debugging cost; failing
+      fast collapses it to zero.
+    prompt_phrasing: >
+      "Fail fast: raise at the boundary instead of returning None or a
+      default on bad input."
+    anti_phrase: >
+      "Fail fast on programmer errors and bad input — not on expected,
+      recoverable conditions that the caller should handle gracefully."
+
+  - term: parse, don't validate
+    chapter: 7
+    definition: >
+      Borrowed from Alexis King. Instead of checking a value and passing the
+      same wide type onward (validate), transform it into a narrower type
+      that carries the proof of validity (parse), so downstream code cannot
+      receive an invalid value.
+    why_it_matters: >
+      Eliminates re-checking and the assertion walls it breeds: you validate
+      once, at the boundary, and the type guarantees it thereafter. The
+      constructive form of "make illegal states unrepresentable".
+    prompt_phrasing: >
+      "Parse, don't validate: turn this input into a value object (or
+      Enum/Literal) that can't be constructed invalid, and have downstream
+      code take that type."
+    anti_phrase: >
+      "Parse at meaningful boundaries with real invariants — not a bespoke
+      type for every primitive (FirstName, MiddleName...): that's
+      value-object soup. In Python the proof lives in the validated
+      constructor, not the compiler."
+
   - term: YAGNI
     chapter: 9
     definition: >
