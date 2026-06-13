@@ -475,6 +475,90 @@ terms:
       value-object soup. In Python the proof lives in the validated
       constructor, not the compiler."
 
+  - term: Open-Closed Principle
+    chapter: 8
+    definition: >
+      Software should be open for extension but closed for modification: you
+      add new behavior by adding new code, not by editing code that already
+      works.
+    why_it_matters: >
+      Every edit to tested code can break it; new code added alongside
+      cannot. OCP confines change to new, untested-but-isolated code.
+    prompt_phrasing: >
+      "Make this open-closed: a new case should be a new class, not an edit
+      to this function."
+    anti_phrase: >
+      "An interface with one implementation is speculation, not OCP — abstract
+      on evidence of real variation, not a hunch (a couple of stable branches
+      can stay an if/elif)."
+
+  - term: Liskov Substitution Principle
+    chapter: 8
+    definition: >
+      A subtype must be substitutable for its base type: it honors the base's
+      contract — no stronger preconditions, no weaker postconditions, no
+      surprising exceptions or return types.
+    why_it_matters: >
+      Code written against the base must work with any subtype; a subtype that
+      breaks the promise is a bug wearing a valid type.
+    prompt_phrasing: >
+      "Check this subclass for a Liskov violation — does it honor the base
+      class's contract?"
+    anti_phrase: >
+      "If a subtype can't honor the contract, it isn't a subtype — use
+      composition instead of forcing the inheritance."
+
+  - term: composition over inheritance
+    chapter: 8
+    definition: >
+      Prefer giving an object the behavior it needs by holding another object
+      (has-a, injected) over acquiring it by subclassing (is-a). Inheritance
+      for genuine is-a relationships only.
+    why_it_matters: >
+      An injected dependency is swappable at runtime and free of inheritance's
+      fragility (fragile base class, deep hierarchies). It is the basis of
+      Strategy and much of Part III.
+    prompt_phrasing: >
+      "Prefer composition: inject what it has, don't subclass what it is."
+    anti_phrase: >
+      "Not a ban on inheritance — genuine is-a and Template Method are right
+      uses; 'prefer' is a lean, not a law."
+
+  - term: dependency inversion principle
+    chapter: 8
+    definition: >
+      High-level policy and low-level details should both depend on an
+      abstraction, rather than policy depending on details. The dependency
+      arrow points at the interface from both sides.
+    why_it_matters: >
+      Insulates stable policy from volatile details, which is precisely what
+      lets you add or swap details without editing the core (it is OCP's
+      directional half, and the inversion Chapter 5 deferred).
+    prompt_phrasing: >
+      "Depend on the abstraction — invert this dependency so the core points
+      at the interface, not the concrete class."
+    anti_phrase: >
+      "Invert at real boundaries (volatile, external, swappable) — not between
+      two stable pieces that always change together; that's indirection with a
+      grand name."
+
+  - term: code to the interface
+    chapter: 8
+    definition: >
+      Depend on an abstract type (an ABC, a Protocol, or a callable
+      signature), not on a concrete class — so any conforming implementation
+      can be substituted.
+    why_it_matters: >
+      It is the enabling technique for OCP and dependency inversion: a stable
+      thing to build against while implementations come and go.
+    prompt_phrasing: >
+      "Code to the interface, not the implementation. Extract an interface
+      (ABC) and depend on that." (ABC when you own both sides; Protocol when
+      retrofitting code you don't.)
+    anti_phrase: >
+      "Only once a real interface exists — don't invent an abstraction to
+      stand in front of a single concrete class you'll never swap."
+
   - term: YAGNI
     chapter: 9
     definition: >
