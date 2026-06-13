@@ -20,11 +20,13 @@ Python is the reference idiom; TypeScript is the parallel track (synced `<LangTa
 - [x] `pnpm install` in `examples/` (vitest + tsx + typescript); lockfile committed
 - [x] root `tsconfig.json` excludes `examples`
 - [x] this progress tracker created
-- [ ] `AGENTS.md` updated (Code/Structure rules; Settled Decision 2 note; vitest + label convention)
-- [ ] `docs/chapter-template.mdx` updated (Before/After `###`+LangTabs; Language Notes; cheat-sheet dual-lang)
-- [ ] `docs/book-design-software-design-for-humans-and-ai.md` structural sections updated
-- [ ] `docs/STYLE-SAMPLES.md` — TS exemplars pending note
-- [ ] Phase 0 gate: `pnpm build` passes; `pnpm -C examples test` + `typecheck` green
+- [x] `AGENTS.md` updated (Code/Structure rules; Settled Decision 2 note; vitest + label convention)
+- [x] `docs/chapter-template.mdx` updated (Before/After `###`+LangTabs; Language Notes; cheat-sheet dual-lang)
+- [x] `docs/book-design-software-design-for-humans-and-ai.md` structural sections updated
+- [x] `docs/STYLE-SAMPLES.md` — TS exemplars pending note
+- [x] Phase 0 gate: `pnpm build` passes; `pnpm -C examples test` + `typecheck` green
+
+**Phase 0 complete** — committed `271e0d0`.
 
 ## Phase 1 — Pilot: Ch 13 (Strategy & Template Method)
 
