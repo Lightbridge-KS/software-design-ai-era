@@ -55,7 +55,17 @@ for paired-pattern chapters, dual-language cheat sheets, `examples/chNN/{py,ts}`
 
 - [x] Ch 1 carries the reader note ("Part I is Python; dual-language from Part II"). Ch 2, 3 unchanged (one note at the entry point suffices).
 
-## Refactor status: COMPLETE
+## Next up (new drafting, not refactor)
+
+Drafted so far: Ch 1–11, 13. **Stubs remaining:** Ch 12 (Composite & Decorator),
+14 (Observer & State), 15 (Iterator & Visitor); Part IV (16–18); Part V (19–22).
+**Next:** draft **Ch 12** — a Part III pattern chapter, authored **dual-language
+from the start** (follow the Ch 13 exemplar + AGENTS.md rules; per-chapter loop:
+brief → editor approval → draft → gates → commit). Editorial revisit items
+(editor): TS prose voice in Language Notes tabs; Ch 9 EXERCISE.md (Python-only);
+intro-aside redundancy across Ch 1/4/13; pin external citations.
+
+## Multi-language refactor status: COMPLETE
 
 All Part II + III drafted chapters (4–11, 13) are dual-language; Part I (1–3) is
 Python-reference with the entry note. Gates per chapter: `pnpm build` ·
