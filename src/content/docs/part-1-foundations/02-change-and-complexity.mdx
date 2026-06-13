@@ -1,0 +1,295 @@
+---
+title: "2. The Two Enemies: Change and Complexity"
+description: "What design fights — complexity and change — taught as a worked disaster that becomes the map for the rest of the book."
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import AICollab from '../../../components/AICollab.astro';
+import VocabTable from '../../../components/VocabTable.astro';
+import PromptCard from '../../../components/PromptCard.astro';
+import TryIt from '../../../components/TryIt.astro';
+
+Chapter 1 said design is communication. This chapter says what the communication
+is *for*. Every principle in this book — every name in the phrasebook — exists to
+fight two forces that grind software toward unworkability. Meet them in their
+natural habitat first; we'll name them after.
+
+## The Disaster
+
+Checkout-lite started with the smallest honest version of charging a customer:
+
+```python
+def checkout(order: Order, payment_token: str) -> float:
+    total = order.subtotal
+    if order.customer.is_member:
+        total = total * 0.85
+    print(f"Charging {payment_token} for {total:.2f}")
+    return total
+```
+
+Four lines. Nothing to design. Then the requirements arrived, the way they always
+do — one reasonable sentence at a time.
+
+*"We owe sales tax now."* A branch, per country. *"Add shipping."* Another branch,
+per country. *"Email members their receipt."* A block of SMTP. *"Save completed
+orders so we can reload them."* A read, an append, a write. Each request took two
+minutes. Each was *locally* reasonable — there was nowhere else obvious to put the
+code, and putting it right here worked. Five requests later, `checkout` looks like
+this (trimmed in the middle; the whole thing is in `examples/ch02/`):
+
+```python
+def checkout(order: Order, payment_token: str, send_email: bool = True) -> float:
+    total = order.subtotal
+    if order.customer.is_member:
+        total = total * 0.85
+
+    if order.country == "US":
+        total = total + total * 0.07
+    elif order.country == "DE":
+        total = total + total * 0.19
+    elif order.country == "JP":
+        total = total + total * 0.10
+    # ... shipping branches, gift-wrap fee ...
+
+    print(f"Charging {payment_token} for {total:.2f}")
+
+    if order.customer.is_member and send_email:
+        msg = EmailMessage()
+        # ... eight lines of SMTP, wrapped in a try/except that swallows errors ...
+
+    existing = json.loads(ORDERS_FILE.read_text()) if ORDERS_FILE.exists() else []
+    existing.append({...})
+    ORDERS_FILE.write_text(json.dumps(existing, indent=2))
+    return round(total, 2)
+```
+
+You have written this function. Everyone has. No single edit was a mistake, and
+that is precisely the trouble: there was never a line you could point to and say
+*there, that's where it went wrong.* It went wrong in the aggregate, invisibly,
+while every individual step looked like progress.
+
+And here is the detail that matters most for the rest of this chapter: **the code
+works.** Its tests pass. Members get their discount, tax is charged, orders are
+saved. If "working" were the bar, we would be done. The reason we are not done is
+that this function has become expensive to *change* — and change is the only
+constant a codebase has.
+
+## The One Goal: Soft Software
+
+Strip away every principle, pattern, and rule in this book and one goal remains:
+keep the software *soft* — cheap to change. That is the whole job. "Soft" has a
+precise meaning worth holding onto: in soft software, the cost of the next change
+stays roughly flat as the system grows. In hard software, each change costs more
+than the last, because each change must first fight through the residue of all the
+changes before it.
+
+`checkout` is hardening. The first tax branch was cheap. The fifth country will be
+dear — not because tax is hard, but because adding it means re-reading a function
+that also does shipping, email, and disk I/O, holding all of it in your head long
+enough to be sure your one-line addition breaks none of it. The difficulty has
+migrated out of the problem and into the *structure*. That migration has a name.
+
+## Complexity, Named
+
+**Complexity** is the difficulty of understanding and safely changing a system.
+Fred Brooks gave us the first cut: some complexity is **essential** — inherent in
+the problem (tax law genuinely differs by country, and no design erases that) — and
+some is **accidental**, contributed entirely by our solution. The branching, the
+braiding, the need to understand persistence in order to touch pricing: none of
+that is tax law. We added it. Accidental complexity is the part design can win
+back.
+
+John Ousterhout, in *A Philosophy of Software Design*, sharpens the point until it
+has an edge you can work with. Complexity, he writes, is *"anything related to the
+structure of a software system that makes it hard to understand and modify the
+system"* — and the binding constraint, the thing in shortest supply, is
+**understanding**. Code is read and re-understood far more often than it is
+written. `checkout` was written once, in five easy sittings; it will be understood
+again every single time anyone dares to change it.
+
+Which gives us the chapter's first aphorism, and it is worth saying slowly:
+complexity is not how hard the code was to *write*. It is how hard it is to *not
+break*.
+
+## The Three Symptoms
+
+Complexity is easier to *recognize* than to define, and Ousterhout's three symptoms
+are the recognizing. Learn them as more than concepts — learn them as **questions
+you can ask out loud**, of your own diff or your agent's, because in Part V they
+become exactly that.
+
+**Change amplification** — one decision forces many edits. Our concrete case:
+the business expands to Canada. That is *one* requirement. But "CA" needs a tax
+branch and a shipping branch, in two different parts of the function, and you must
+find both. One decision, many edits, scattered. (`examples/ch02/demonstrate_amplification.py`
+runs this live.)
+
+**Cognitive load** — how much you must know to make a change safely. To add the
+Canadian tax line correctly, you must understand the member discount that ran
+before it (does tax apply before or after the discount?), the shipping block that
+runs after it, and the rounding at the end. None of that is about tax. All of it
+is load you carry just to touch one line.
+
+**Unknown unknowns** — the worst symptom, because you cannot see it. When Canada
+falls through the shipping branches, it lands in the `else` and is charged the
+rest-of-world rate of 24.90 — silently, with no line of code mentioning Canada,
+no error, no decision. The developer who added Canada never knew shipping was a
+question. This is the symptom you cannot grep for: not a bug you can find, but a
+decision the structure made *on your behalf* without telling you. Of the three,
+unknown unknowns are what turn a codebase frightening — the point where people
+start saying "don't touch that, nobody knows what it does."
+
+## The Two Metrics: Coupling and Cohesion
+
+If complexity is the disease, two structural measures are how we'll diagnose it
+throughout Part II. Meet them now by intuition; Chapters 4 and 5 give them their
+full formal treatment and their phrasebook entries.
+
+**Coupling** is how much one piece depends on another. In `checkout`, pricing is
+coupled to persistence: you cannot reason about the total without the file-writing
+code sitting right there in the same body, sharing the same variable. Change one,
+risk the other.
+
+**Cohesion** is how much a single piece's contents belong together. `checkout` has
+almost none: computing a price, sending an email, and writing JSON to disk are
+three unrelated jobs sharing one function because that is where they were dropped,
+not because they belong.
+
+The whole disaster reduces to one diagnosis: **high coupling, low cohesion.** Nearly
+every principle in Part II is, underneath, a technique for turning one of those two
+dials in the right direction — and a good chunk of this book's job is making those
+dials something you and your agent can turn on purpose, with a word.
+
+## Complexity Is Incremental
+
+Notice what the disaster was *not*: a catastrophe. No one chose to braid five
+concerns together. Complexity never arrives that way. It accretes — a branch here,
+a special case there, each too small to argue about, each leaving the system a
+little harder than it found it. Ousterhout's prescription is correspondingly
+uncomfortable: because complexity is incremental, the defense must be too. You
+cannot let "just this one branch" slide, because *every* increment is just one
+branch. The whole pile is made of reasonable exceptions.
+
+He frames the choice as two stances. **Tactical programming** optimizes for getting
+*this* feature working now; design is a tax you skip. **Strategic programming**
+treats a clean design as part of the deliverable, accepting a small constant cost
+per change to keep the cost-per-change constant. `checkout` is what tactical
+programming builds: five fast wins and a sixth change that hurts.
+
+Now the AI-era twist, and it is the bridge to the rest of this book. **An
+unconstrained agent is the ultimate tactical programmer.** Ask it to "add shipping"
+and it will add shipping — wherever shipping most easily goes, which is right here,
+in this function, making the knot one strand tighter. It is fast, tireless, and
+locally correct, which is exactly the profile that built the disaster in the first
+place, now available at a keystroke. Strategic programming — the decision to stop
+and keep the design soft — is the one move the agent will not make unless you make
+it. That decision is yours, and the vocabulary for expressing it is the rest of
+this book.
+
+## 🤖 AI Collaboration
+
+The headline of this chapter, for working with an agent, is a single sentence:
+**an agent amplifies whatever structure it finds.** Point a capable agent at a
+clean module and it extends the cleanliness; point it at `checkout` and it extends
+the tangle, fluently, at scale. The model's competence is not the variable — your
+codebase's structure is. Garbage in, garbage *at scale*.
+
+<AICollab>
+
+### Vocabulary
+
+The three symptoms are not just analysis; they are review questions, phrased to be
+asked of any diff.
+
+<VocabTable>
+
+| You say | The agent hears |
+|---|---|
+| "Does this change amplify — how many places must I edit for one decision?" | Count the edit sites; scattered edits signal a missing abstraction |
+| "What must I understand to change this safely?" | Surface the cognitive load — the hidden dependencies a reader must hold |
+| "What does this code decide silently, without being asked?" | Hunt unknown unknowns: defaults, fall-through branches, implicit behavior |
+| "Keep this change cohesive — one concern per place" | Don't braid a new concern into an unrelated body; find its right home |
+
+</VocabTable>
+
+### Prompt templates
+
+<PromptCard title="The strategic-edit constraint">
+
+I need to add [feature] to this module. Before writing code, tell me: which
+existing concerns does the natural place for this change already mix together, and
+would adding [feature] there increase the coupling? If so, propose where it should
+live instead. Do not just make it work in the easiest spot.
+
+</PromptCard>
+
+<PromptCard title="The complexity review">
+
+Review this function for Ousterhout's three symptoms of complexity: change
+amplification (one change, many edits), cognitive load (what I must know to edit
+safely), and unknown unknowns (behavior decided silently). Point to specific lines.
+Do not refactor yet — just diagnose.
+
+</PromptCard>
+
+### Review checklist
+
+- [ ] Did one requirement turn into edits in several places? (amplification)
+- [ ] Could you state, in one breath, everything needed to change this safely?
+- [ ] Did the change add behavior nobody asked for — a default, a fall-through?
+- [ ] Did a new concern get braided into a body that was about something else?
+
+### Agent failure modes
+
+- **The eager strand.** Asked to add a feature, the agent adds it where it fits
+  most easily — which is usually the already-overloaded function — tightening the
+  knot while reporting success. It optimizes for *working*, not for *soft*.
+- **The silent default.** Filling a gap, the agent picks a reasonable-looking
+  fall-through (an `else`, a default argument) and never flags that it *chose*.
+  Tomorrow's unknown unknown, written today.
+- **Green-checkmark confidence.** The agent runs the tests, they pass, and it
+  declares victory. Passing tests prove the code works; they say nothing about
+  whether the next change will be safe. That distinction is this whole chapter.
+
+</AICollab>
+
+<TryIt starter="examples/ch02/checkout_tangle.py">
+
+The tangle is real and runnable. First, run `demonstrate_amplification.py` and
+watch one requirement (Canada) touch two branches and trigger one silent
+mispricing. Then hand `checkout_tangle.py` to your agent with the **complexity
+review** prompt above — diagnosis only, no refactor — and compare its three-symptom
+report to your own reading. Where did it see a knot you missed? Where did it call
+something clean that you'd flag? Hold the diagnosis; the next chapter gives you the
+loop for acting on it, and the rest of the book gives you the cuts.
+
+</TryIt>
+
+## Key Takeaways
+
+- All design serves one goal: keeping software **soft** — holding the cost of the
+  next change flat instead of letting it climb.
+- **Complexity** is the difficulty of understanding and safely changing a system.
+  Some is essential (the problem's); the rest is accidental (ours to win back).
+  It is not how hard the code was to write — it's how hard it is to not break.
+- Recognize it by its three symptoms: **change amplification, cognitive load,
+  unknown unknowns.** Learn them as questions you can ask of any diff.
+- Complexity is **incremental** — it accretes one reasonable exception at a time,
+  so the defense must be incremental too. An unconstrained agent is the ultimate
+  tactical programmer; strategic restraint is the move only you can call.
+- Working code and soft code are different claims. Passing tests verify the first
+  and say nothing about the second.
+- **This disaster is the book's map.** Each knot has a chapter that cuts it:
+
+| Knot in `checkout` | Cut by | Chapter |
+|---|---|---|
+| Pricing `if/elif` per country | Strategy | 10 |
+| Tax & shipping rules mixed in | Single Responsibility | 4 |
+| Email side-effect inline | Observer | 13 |
+| Persistence braided into pricing | Dependency direction | 17 |
+| One function, many concerns | Cohesion, Façade | 4, 12 |
+
+- **Glossary terms added:** *essential vs. accidental complexity · change
+  amplification · cognitive load · unknown unknowns · tactical vs. strategic
+  programming.* (Coupling and cohesion arrive by intuition here; their phrasebook
+  entries land in Chapters 4 and 5.)

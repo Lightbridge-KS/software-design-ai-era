@@ -44,6 +44,83 @@ terms:
       "A pattern name is a hypothesis, not a command — pair every term with
       its right-sizing constraint, and review for fit."
 
+  - term: essential vs. accidental complexity
+    chapter: 2
+    definition: >
+      Essential complexity is inherent in the problem (tax law genuinely
+      varies by country); accidental complexity is contributed by our
+      solution's structure and can be designed away.
+    why_it_matters: >
+      Separates the difficulty you must accept from the difficulty you
+      created — only the second is yours to win back.
+    prompt_phrasing: >
+      "Which of this complexity is essential to the problem, and which did
+      our structure add?"
+    anti_phrase: >
+      "Don't 'simplify' away essential complexity — a missing tax rule is a
+      bug, not elegance."
+
+  - term: change amplification
+    chapter: 2
+    definition: >
+      A symptom of complexity: one logical decision forces edits in many
+      scattered places.
+    why_it_matters: >
+      Scattered edits are slow, error-prone, and a near-certain sign of a
+      missing abstraction or boundary.
+    prompt_phrasing: >
+      "Does this change amplify — how many places must I edit for one
+      decision?"
+    anti_phrase: >
+      "Not every multi-file change is amplification; a genuinely
+      cross-cutting feature legitimately touches several places once."
+
+  - term: cognitive load
+    chapter: 2
+    definition: >
+      A symptom of complexity: how much a developer must hold in mind to
+      change a piece of code safely.
+    why_it_matters: >
+      Understanding, not typing, is the scarce resource; high load is where
+      mistakes and fear come from.
+    prompt_phrasing: >
+      "What must I understand to change this safely? List the hidden
+      dependencies."
+    anti_phrase: >
+      "Fewer lines is not always lower load — a dense one-liner can cost
+      more to understand than five plain ones."
+
+  - term: unknown unknowns
+    chapter: 2
+    definition: >
+      The worst symptom of complexity: behavior the structure decides
+      silently, so you don't even know there is something you must change.
+    why_it_matters: >
+      You cannot grep for what you don't know exists; this is what makes a
+      codebase frightening to touch.
+    prompt_phrasing: >
+      "What does this code decide silently — defaults, fall-through
+      branches, implicit behavior?"
+    anti_phrase: >
+      "Surfacing an unknown unknown means naming the decision, not adding a
+      guard for every imaginable case."
+
+  - term: tactical vs. strategic programming
+    chapter: 2
+    definition: >
+      Tactical programming optimizes for getting this feature working now;
+      strategic programming treats a clean design as part of the
+      deliverable, accepting a small constant cost to keep change cheap.
+    why_it_matters: >
+      An unconstrained agent is the ultimate tactical programmer — fast and
+      locally correct; strategic restraint is the move only you can call.
+    prompt_phrasing: >
+      "Before making it work in the easiest spot, propose where this should
+      live to keep the design clean."
+    anti_phrase: >
+      "Strategic isn't gold-plating — invest in the design the change needs,
+      not the architecture you imagine wanting."
+
   - term: YAGNI
     chapter: 9
     definition: >
