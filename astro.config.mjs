@@ -15,7 +15,7 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/Lightbridge-KS',
+          href: 'https://github.com/Lightbridge-KS/software-design-ai-era',
         },
       ],
       sidebar: [
