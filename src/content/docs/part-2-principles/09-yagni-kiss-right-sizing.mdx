@@ -3,7 +3,8 @@ title: "9. The Counterweights: YAGNI, KISS, and Right-Sizing"
 description: "Every principle inverts when over-applied. This chapter is the brake pedal — the vocabulary you'll quote most at your agent."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -106,9 +107,9 @@ how much must they already know before this code explains itself?
 "Right-size it" needs sizes. The book uses three, and the names are worth
 memorizing because they compress an entire structural budget into one word:
 
-- **Simple tier** — one module. Functions and dataclasses, stdlib first,
-  configuration as parameters. Most scripts, prototypes, and internal tools live
-  their whole lives here, correctly.
+- **Simple tier** — one module. Functions and plain value types, the standard
+  library first, configuration as parameters. Most scripts, prototypes, and
+  internal tools live their whole lives here, correctly.
 - **Modular tier** — one package with named layers (`core/`, `infra/`, `api/`),
   dependencies pointing inward, constructor injection at the boundaries. For code
   with a team, tests, releases, and more than one integration.
@@ -156,10 +157,15 @@ answer, no structure.
 
 For the only time in this book, the After is *shorter* than the Before. That
 inversion is the chapter. Here is the order-persistence cathedral — abridged; the
-full tour is in `examples/ch09/` — next to what the request actually needed:
+full tour is in `examples/ch09/` — next to what the request actually needed.
 
-<Tabs>
-  <TabItem label="Before (the cathedral, abridged)">
+### Before
+
+The cathedral: an interface, a factory, a serializer hierarchy, and a settings
+object, all guarding a single JSON file.
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 class IOrderRepository(ABC):
@@ -190,7 +196,50 @@ class OrderRepositoryFactory:
 ```
 
   </TabItem>
-  <TabItem label="After (right-sized)">
+  <TabItem label="TypeScript">
+
+```typescript
+export interface IOrderRepository {
+  save(orders: readonly Order[]): void;
+  load(): Order[];
+}
+
+export class JsonOrderRepository implements IOrderRepository {
+  private readonly path: string;
+  private readonly serializer = new OrderSerializer(); // delegates to LineItemSerializer
+
+  constructor(settings: StorageSettings) {
+    this.path = join(settings.storageDir, settings.filename);
+  }
+
+  save(orders: readonly Order[]): void {
+    const payload = orders.map((o) => this.serializer.toJSON(o));
+    writeFileSync(this.path, JSON.stringify(payload, null, 2));
+  }
+
+  load(): Order[] {
+    const payload = JSON.parse(readFileSync(this.path, "utf-8")) as Record<string, unknown>[];
+    return payload.map((d) => this.serializer.fromJSON(d));
+  }
+}
+
+export class OrderRepositoryFactory {
+  static create(kind = "json"): IOrderRepository {
+    if (kind === "json") return new JsonOrderRepository(storageSettingsFromEnv());
+    throw new Error(`unknown repository kind: ${kind}`);
+  }
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+What the request actually needed: two functions and the platform's own JSON.
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 import json
@@ -219,11 +268,39 @@ def load_orders(path: Path) -> list[Order]:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
 
-Same behavior. The same tests pass against both — `examples/ch09/test_ch09.py`
-runs every assertion through the cathedral and the two functions and demands
-identical results. Roughly eighty percent of the code is gone.
+```typescript
+import { readFileSync, writeFileSync } from "node:fs";
+import { type LineItem, type Order } from "./models";
+
+export function saveOrders(orders: readonly Order[], path: string): void {
+  const payload = orders.map((o) => ({
+    items: o.items.map((i) => ({ name: i.name, price: i.price })),
+    isMember: o.isMember,
+  }));
+  writeFileSync(path, JSON.stringify(payload, null, 2));
+}
+
+export function loadOrders(path: string): Order[] {
+  const payload = JSON.parse(readFileSync(path, "utf-8")) as {
+    items: LineItem[];
+    isMember: boolean;
+  }[];
+  return payload.map((entry) => ({
+    items: entry.items.map((item) => ({ name: item.name, price: item.price })),
+    isMember: entry.isMember,
+  }));
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+Same behavior. The same tests pass against both — `examples/ch09/py/test_ch09.py`
+and `examples/ch09/ts/ch09.test.ts` run every assertion through the cathedral and
+the two functions and demand identical results. Roughly eighty percent of the code
+is gone.
 
 Walk through what the cathedral was selling. A second storage backend? The
 interface and factory wait for one that was never requested. Configurable paths?
@@ -235,7 +312,15 @@ serializer hierarchy? The format never varies. Every flexibility the cathedral
 promises, the After either already has — for free — or correctly refuses to pay
 for.
 
-## Pythonic Notes
+## Language Notes
+
+Both languages ship a Simple-tier toolkit in the box — and reaching past it for a
+framework is exactly the over-engineering this chapter warns against. The toolkit
+differs in syntax but not in spirit: a module for a boundary, a function for
+behavior, a plain value for data, the platform for infrastructure.
+
+<LangTabs>
+  <TabItem label="Python">
 
 Right-sizing is easier in Python than in almost any language, which makes
 over-engineered Python especially gratuitous. The Simple tier's toolkit is the
@@ -256,6 +341,34 @@ language itself:
   `sqlite3`, `csv` cover most persistence a Simple-tier tool will ever need. Every
   dependency is a small marriage: ongoing costs, breaking changes, security
   surface. Default to not marrying.
+
+</TabItem>
+<TabItem label="TypeScript">
+
+TypeScript tempts you toward ceremony — the ecosystem is full of frameworks eager
+to own your boundaries — so the discipline is to notice that the Simple tier is
+already in your hands:
+
+- **A module is already a boundary.** A `.ts` file with a few `export`s namespaces,
+  hides its un-exported helpers, and presents an import-able public API. A class
+  that only groups functions is a module wearing a costume — the same costume,
+  whatever the language.
+- **A function is already a value.** It can be passed, stored, and injected, which
+  is why structural typing lets a strategy be a bare arrow with no `implements`
+  (Part III makes a sport of this).
+- **A `type` or `interface` is already a DTO.** `readonly` fields give you an
+  immutable value shape with no class and no decorator. A hierarchy of hand-written
+  data carriers — or a class where an object literal would do — buys nothing.
+- **A plain object or `Record` is already a config object**, and a parameter with a
+  default is already a setting. Reach for a config framework when settings *behave*
+  — validation, layering, reloading — not when three constants need a home.
+- **The platform is already your infrastructure layer** — `JSON`, `fetch`, and
+  `node:fs` cover most persistence and I/O a Simple-tier tool will ever need before
+  any dependency is warranted. Every dependency is a small marriage: ongoing costs,
+  breaking changes, a wider security surface. Default to not marrying.
+
+</TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -296,7 +409,7 @@ it reads as diligence. These phrases are the counter-instruction.
 | "Keep it simple" / "KISS" | Prefer the direct implementation with the fewest moving parts |
 | "No premature abstraction" | No interface, factory, or layer until ≥2 concrete cases exist |
 | "Right-size this for a script / an internal tool / a production service" | Sets the structural budget (tier) for everything that follows |
-| "Start at the Simple tier" | One module, functions + dataclasses, stdlib first, config as parameters |
+| "Start at the Simple tier" | One module, functions + plain value types, the platform's library first, config as parameters |
 | "Inline this layer" | Remove the pass-through; let callers talk to the real thing |
 
 </VocabTable>
@@ -305,8 +418,9 @@ it reads as diligence. These phrases are the counter-instruction.
 
 <PromptCard title="The right-sizing preamble — paste atop any feature request">
 
-Context: this is an internal tool at the **Simple tier** — one module, stdlib
-only. Implement the feature below with **no new abstractions, layers, or
+Context: this is an internal tool at the **Simple tier** — one module, the
+platform's standard library only. Implement the feature below with **no new
+abstractions, layers, or
 dependencies** unless at least two concrete uses exist *today*. If you are tempted
 to add flexibility, do not build it — list it under a "Deferred" heading at the
 end of your reply instead.
@@ -363,7 +477,7 @@ When your agent comes back, check:
 
 </AICollab>
 
-<TryIt starter="examples/ch09/exercise/settings.py">
+<TryIt starter="examples/ch09/py/exercise/settings.py">
 
 This exercise is inverted: your agent's job is to make the starter *smaller*. The
 starter is checkout-lite's configuration "system" — a provider interface, a chain
@@ -373,7 +487,8 @@ with defaults. Its tests pass, and they pin only the behavior that matters
 **de-engineering audit** prompt against it. The tests must stay green; expect well
 over half the code to disappear. Grade with the review checklist, then ask the
 question the catalog always asks: what change, on what evidence, did each deleted
-piece serve? Full instructions in `examples/ch09/exercise/EXERCISE.md`.
+piece serve? Full instructions in `examples/ch09/py/exercise/EXERCISE.md`
+(TypeScript twin: `examples/ch09/ts/exercise/settings.ts`).
 
 </TryIt>
 
@@ -387,8 +502,9 @@ piece serve? Full instructions in `examples/ch09/exercise/EXERCISE.md`.
 - **Declare the tier** — Simple, Modular, or Full — before code is written. Start
   Simple, promote on evidence; most arguments about over-engineering are
   undeclared disagreements about tier.
-- A function parameter is the cheapest seam there is, and Python's modules,
-  functions, and dataclasses make the Simple tier unusually capable.
+- A function parameter is the cheapest seam there is, and every language ships a
+  Simple-tier toolkit — modules, functions, plain value types — that makes the
+  smallest design more capable than it looks.
 - The brake has a failure mode too: tests, honest names, and module boundaries are
   never YAGNI.
 - **Glossary terms added:** *YAGNI · KISS · premature abstraction · right-sizing ·
