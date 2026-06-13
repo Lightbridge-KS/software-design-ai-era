@@ -3,7 +3,8 @@ title: "5. Coupling and the Principle of Least Knowledge"
 description: "Coupling is how much one unit must know about another. The Law of Demeter and tell-don't-ask are techniques for knowing less."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -22,10 +23,25 @@ Marketing wants VIP customers to get free shipping over $100. The membership dat
 lives a few hops away — an order has a customer, who has a membership, which has a
 tier — so you write the obvious check:
 
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 def free_shipping(order: Order) -> bool:
     return order.customer.membership.tier == "gold" and order.subtotal >= 100
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+function freeShipping(order: Order): boolean {
+  return order.customer.membership.tier === "gold" && subtotal(order) >= 100;
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 It works, ships, and looks harmless. Then, a quarter later, membership gets
 remodeled: tiers move under a new `Plan` object, or `tier` becomes an enum. This
@@ -69,10 +85,15 @@ telling couples you only to a question.
 ## Before / After
 
 The VIP feature shows both techniques in one move. Instead of reaching through the
-graph and deciding for the order, we let each object answer for what it owns:
+graph and deciding for the order, we let each object answer for what it owns.
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+The caller knows the whole path — `order → customer → membership → tier` — and
+pulls the subtotal out to decide for the order:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # the caller knows the whole path: order -> customer -> membership -> tier
@@ -81,7 +102,25 @@ def free_shipping(order: Order) -> bool:
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
+
+```typescript
+// the caller knows the whole path: order -> customer -> membership -> tier
+export function freeShipping(order: Order): boolean {
+  return order.customer.membership.tier === "gold" && subtotal(order) >= 100;
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+Each object answers for what it owns, talking only to an immediate friend, and the
+caller asks one object one question:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # Membership answers about tiers; Customer about status; Order about its offer.
@@ -103,15 +142,48 @@ def free_shipping(order: Order) -> bool:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
+
+```typescript
+// Membership answers about tiers; Customer about status; Order about its offer.
+class Membership {
+  constructor(readonly tier: "standard" | "gold") {}
+  get isGold(): boolean {
+    return this.tier === "gold";
+  }
+}
+
+class Customer {
+  constructor(readonly membership: Membership) {}
+  get isVip(): boolean {
+    return this.membership.isGold; // one hop, to a friend
+  }
+}
+
+class Order {
+  constructor(readonly customer: Customer, readonly subtotal: number) {}
+  get qualifiesForFreeShipping(): boolean {
+    return this.customer.isVip && this.subtotal >= 100;
+  }
+}
+
+// the caller now asks one object one question:
+export function freeShipping(order: Order): boolean {
+  return order.qualifiesForFreeShipping;
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 No object reaches past an immediate friend, and the decision lives with the data it
 concerns. The payoff is concrete: the knowledge of *how membership is shaped* now
 exists in exactly one place — `Membership` — instead of scattered across every
-caller. When tiers get remodeled next quarter, `is_gold` changes and nothing else
-does. The `examples/ch05/` tests prove it the hard way: the after's `free_shipping`
-contains neither the word `membership` nor `tier`, so the graph can be rebuilt
-beneath it without the caller ever knowing.
+caller. When tiers get remodeled next quarter, `is_gold` (TS: `isGold`) changes and
+nothing else does. The `examples/ch05/py/` and `examples/ch05/ts/` tests prove it the
+hard way: the after's `free_shipping` / `freeShipping` contains neither the word
+`membership` nor `tier`, so the graph can be rebuilt beneath it without the caller
+ever knowing.
 
 ## Dependency Direction
 
@@ -158,7 +230,10 @@ codebase-scale form is the tiers of Chapter 17. For now, hold the simpler heuris
 arrows point toward the stable, the core points outward at nothing, and no arrow ever
 forms a cycle.
 
-## Pythonic Notes
+## Language Notes
+
+<LangTabs>
+  <TabItem label="Python">
 
 Python offers no resistance to a train wreck — `a.b.c.d` is one fluent expression,
 and nothing at compile time objects. Least Knowledge in Python is therefore a
@@ -174,6 +249,38 @@ reaching its own fields is not talking to anyone. The Law of Demeter is about
 coupling to *structure that will hurt you when it changes* — a chain across
 independently-evolving objects — not a literal ban on the dot operator. Count the
 *owners* in the chain, not the dots.
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+TypeScript objects to a train wreck no more than Python does: `a.b.c.d` type-checks
+happily as long as the shapes line up, so Least Knowledge stays a *discipline* the
+language won't keep for you. What TypeScript adds is one sharp warning the compiler
+*will* give you for free. Turn on `strictNullChecks` (it rides along with `strict`)
+and a chain like `order.customer?.membership?.tier` lights up with the optional-chain
+question marks the data forces on you — every `?.` is the type system showing you,
+in syntax, exactly how far you are reaching and how many ways the path can be empty.
+A long ladder of `?.` is the train wreck made visible.
+
+Three TS-native moves keep the disciplined version clean. A **getter** gives you
+Python's `@property` exactly: `get isVip()` reads like a field at the call site, so
+"ask the object a question" costs no visible ceremony. **`readonly` fields** (and
+`readonly` array types) let an object expose state without inviting a caller to reach
+in and mutate it — the data is visible but not yours to poke. And when you genuinely
+want a hard wall, **`#private` fields** are enforced at runtime, not a naming
+convention: a stranger *cannot* read `order.#tier`, so the only way through is the
+question you chose to offer.
+
+The same honest caveat holds, with a TS twist. Not every dot is a violation:
+`order.customer.name` to render a name is fine, and fluent builders that return
+`this` — `query.filter(...).orderBy(...)` — are dots by design. Because the types are
+**structural**, a method that takes `{ tier: string }` already depends on nothing
+more than that one field's shape — the narrowest parameter type *is* your statement
+of Least Knowledge, written where the compiler can check it. Ask for the smallest
+shape the job needs, and count the *owners* in the chain, not the dots.
+
+  </TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -263,7 +370,7 @@ own state — don't move behavior that belongs to a different concern onto it.
 
 </AICollab>
 
-<TryIt starter="examples/ch05/before.py">
+<TryIt starter="examples/ch05/py/before.py">
 
 Take `before.py` (or a module of your own with a `a.b.c.d` chain) and run the
 **find-and-fix train wrecks** prompt. Read the result against two opposite failures
@@ -271,7 +378,7 @@ at once: did a real train wreck survive, *and* did the agent grow a forest of
 pass-through methods to eliminate one? Then ask the deeper question the chapter
 raises: was the right fix to add a method, or to flatten an object graph that was too
 deep to begin with? Our worked refactor and its Least-Knowledge tests are in
-`examples/ch05/`.
+`examples/ch05/py/` (Python) and `examples/ch05/ts/` (TypeScript).
 
 </TryIt>
 
