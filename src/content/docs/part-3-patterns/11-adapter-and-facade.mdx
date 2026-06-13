@@ -3,7 +3,8 @@ title: "11. Integrating and Simplifying: Adapter and Façade"
 description: "Wrap code you don't own to fit your interface (Adapter, where Protocol shines), and put one friendly door on a subsystem (Façade)."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -26,14 +27,29 @@ First, payments. Chapters 8 and 10 built our own gateways behind `IPaymentGatewa
 whose contract is `charge(amount: float) -> Receipt`. Now the business wants Stripe,
 and the SDK looks nothing like ours:
 
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 class StripeClient:          # third-party — we don't own a line of it
     def create_charge(self, amount_cents: int, currency: str = "usd") -> dict: ...
 ```
 
-Different method name, money in cents, a raw `dict` back. We can't make their class
-inherit our ABC, and we *really* don't want cents-and-dicts leaking into pricing,
-receipts, and refunds across the codebase.
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+class StripeClient {        // third-party — we don't own a line of it
+  createCharge(amountCents: number, currency = "usd"): Record<string, unknown> { /* ... */ }
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+Different method name, money in cents, a raw `dict` / `Record` back. We can't make
+their class satisfy our interface by inheritance, and we *really* don't want
+cents-and-records leaking into pricing, receipts, and refunds across the codebase.
 
 Second, the checkout flow itself. Placing an order now means orchestrating four
 subsystems in the right order — price it, charge it, notify the customer, save it —
@@ -99,8 +115,14 @@ coordinating or simplifying, it would be another pass-through.
 
 ## Before / After
 
-<Tabs>
-  <TabItem label="Adapter — Before">
+### Adapter
+
+#### Before
+
+The SDK's shape leaks everywhere a payment happens:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # The SDK's shape leaks everywhere a payment happens:
@@ -112,7 +134,28 @@ if resp["paid"]:
 ```
 
   </TabItem>
-  <TabItem label="Adapter — After">
+  <TabItem label="TypeScript">
+
+```typescript
+// The SDK's shape leaks everywhere a payment happens:
+const client = new StripeClient();
+const resp = client.createCharge(Math.round(orderTotal * 100)); // remember: cents!
+if (resp.paid) {
+  confirmation = String(resp.id); // dig through the record
+}
+// ...and the same cents-and-record ritual is copied into refunds, retries, admin...
+```
+
+  </TabItem>
+</LangTabs>
+
+#### After
+
+The adapter implements our interface and translates inside, so Stripe stays invisible
+everywhere else:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 class StripeGateway(IPaymentGateway):
@@ -129,7 +172,34 @@ receipt = gateway.charge(order_total)
 ```
 
   </TabItem>
-  <TabItem label="Façade — Before">
+  <TabItem label="TypeScript">
+
+```typescript
+class StripeGateway implements IPaymentGateway {
+  constructor(private readonly client: StripeClient) {}
+
+  charge(amount: number): Receipt {
+    const resp = this.client.createCharge(Math.round(amount * 100)); // dollars → cents
+    return { provider: "stripe", amount, confirmation: String(resp.id) }; // record → Receipt
+  }
+}
+
+// everywhere else, Stripe is invisible:
+const gateway: IPaymentGateway = new StripeGateway(new StripeClient());
+const receipt = gateway.charge(orderTotal);
+```
+
+  </TabItem>
+</LangTabs>
+
+### Façade
+
+#### Before
+
+Every caller orchestrates the whole subsystem by hand:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 # every caller orchestrates the whole subsystem by hand:
@@ -141,7 +211,26 @@ receipt = Receipt(total, confirmation)
 ```
 
   </TabItem>
-  <TabItem label="Façade — After">
+  <TabItem label="TypeScript">
+
+```typescript
+// every caller orchestrates the whole subsystem by hand:
+const total = orderTotal(order);
+const confirmation = charge(total);
+sendReceipt(order, total);
+saveOrder(order, total);
+const receipt = { total, confirmation };
+```
+
+  </TabItem>
+</LangTabs>
+
+#### After
+
+One friendly door coordinates the four steps; callers learn only the door:
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def place_order(order: Order) -> Receipt:        # the one friendly door
@@ -155,10 +244,26 @@ receipt = place_order(order)                      # callers know only this
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
+
+```typescript
+const placeOrder = (order: Order): Receipt => {  // the one friendly door
+  const total = orderTotal(order);
+  const confirmation = charge(total);
+  sendReceipt(order, total);
+  saveOrder(order, total);
+  return { total, confirmation };
+};
+
+const receipt = placeOrder(order);               // callers know only this
+```
+
+  </TabItem>
+</LangTabs>
 
 The full code, with tests that prove the adapter translates and the façade drives the
-whole flow in one call, is in `examples/ch11/`.
+whole flow in one call, is in `examples/ch11/py/` (Python) and `examples/ch11/ts/`
+(TypeScript).
 
 ## Choosing between Adapter and Façade
 
@@ -176,7 +281,13 @@ reception desk in front of a busy office, it's a Façade. And both face the same
 the wrapper must hide more than it exposes — otherwise it's a pass-through with a
 pattern's name on it.
 
-## Pythonic Notes
+## Language Notes
+
+The two languages reach the same design from different starting points — and where
+they differ is exactly the lesson about what the pattern really is.
+
+<LangTabs>
+  <TabItem label="Python">
 
 Here is where the book's interface rule (Chapter 8) pays off. You own your gateways,
 so they inherit the `IPaymentGateway` ABC. But the third-party SDK can't inherit
@@ -200,6 +311,40 @@ a module-level `place_order()` function is "one friendly door," and a curated
 `__init__.py` that re-exports a small public API is a façade over a whole package
 (more on that in Chapter 16). Reach for a Façade *class* only when the simplified
 interface needs to hold state across calls.
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+TypeScript's types are **structural**, which makes the Adapter's central insight
+native to the language. An interface is the target; nothing has to inherit it. A
+foreign object that already has the shape *is* the type, with no `implements` and no
+wrapper:
+
+```typescript
+interface SupportsCharge {
+  charge(amount: number): Receipt;
+}
+
+// InHouseGateway declares no `implements`, inherits nothing of ours —
+// yet it satisfies SupportsCharge by shape alone, so it needs no adapter.
+const gateway: SupportsCharge = new InHouseGateway();
+```
+
+This is the same payoff `Protocol` brings to Python, but it is the default rather than
+an opt-in. When the foreign object *doesn't* match (Stripe's `createCharge` is not
+`charge`), you write a `StripeGateway` that `implements IPaymentGateway` — here the
+keyword is for **intent**, documenting the contract; the compiler would have accepted
+the shape regardless. The decision rule is the same: you own both sides, declare the
+interface and `implements` it; you're retrofitting code you don't, lean on the
+structural match.
+
+For Façade, the idiomatic form is often **not a class at all**. A free `placeOrder`
+function is "one friendly door," and a module's barrel `index.ts` that re-exports a
+small public API is a façade over a whole package (more on that in Chapter 16). Reach
+for a Façade *class* only when the simplified interface must hold state across calls.
+
+  </TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -236,7 +381,7 @@ a wrapper.
 | You say | The agent hears |
 |---|---|
 | "Adapt this SDK to our interface" | Implement our target interface; translate to the adaptee inside |
-| "Depend on a Protocol (structural)" | Don't inherit their class; match by shape, verified by the type checker |
+| "Depend on a structural shape (Protocol / interface)" | Don't inherit their class; match by shape, verified by the type checker |
 | "Put a Façade over this subsystem" | One simpler entry point that coordinates the parts |
 | "One entry point" | Callers should learn one call, not the orchestration |
 | "Does this wrapper add depth?" | Reject pass-throughs that rename or forward 1:1 |
@@ -249,8 +394,9 @@ a wrapper.
 
 Wrap this third-party `[SDK]` behind our `[IPaymentGateway]` with an adapter. The
 adapter implements our interface and **translates** to the SDK (names, units, return
-types) so the SDK's shape never appears elsewhere. Depend on a **`Protocol`** for the
-shape rather than making their class inherit ours. Don't add a layer that only renames.
+types) so the SDK's shape never appears elsewhere. Depend on a **structural shape**
+(a `Protocol` in Python, a plain interface in TypeScript) rather than making their
+class inherit ours. Don't add a layer that only renames.
 
 </PromptCard>
 
@@ -266,7 +412,7 @@ should *reduce* what a caller must know, not re-expose every subsystem method.
 ### Review checklist
 
 - [ ] Does the adapter **translate** (names, units, shapes), not just rename?
-- [ ] For third-party code, does it depend on a **`Protocol`** rather than inheriting?
+- [ ] For third-party code, does it depend on a **structural shape** (Protocol / interface) rather than inheriting?
 - [ ] Are you adapting code you *don't own*? (If you own it, change it instead.)
 - [ ] Does the façade **simplify** — fewer, cleaner calls — rather than forward 1:1?
 - [ ] Does each wrapper hide more than it exposes (Ousterhout's depth test)?
@@ -275,8 +421,9 @@ should *reduce* what a caller must know, not re-expose every subsystem method.
 
 - **The pass-through wrapper.** An "adapter" or "façade" that forwards calls unchanged
   — ceremony with no depth. The most common failure for both patterns.
-- **ABC for foreign code.** The agent tries to make a third-party class inherit your
-  ABC (it can't, cleanly) instead of using a `Protocol`.
+- **Inheritance for foreign code.** The agent tries to make a third-party class
+  inherit your base class (it can't, cleanly) instead of depending on a structural
+  shape (a `Protocol` / interface).
 - **The leaky façade.** A façade whose signature re-exposes the whole subsystem — a
   directory, not a door.
 - **Adapting your own code.** Wrapping code it could simply edit, adding a layer for
@@ -284,15 +431,16 @@ should *reduce* what a caller must know, not re-expose every subsystem method.
 
 </AICollab>
 
-<TryIt starter="examples/ch11/adapter.py">
+<TryIt starter="examples/ch11/py/adapter.py">
 
 Take a third-party library you've used whose API didn't match your code, and run the
 **adapt-a-third-party-SDK** prompt to wrap it behind a small interface of your own.
 Check the two things that matter: does the adapter genuinely translate (or did the
-agent just rename one method?), and did it depend on a `Protocol` rather than trying
-to subclass the library? Then point it at a multi-step flow and ask for a Façade —
-and verify the new door is *smaller* than the subsystem behind it. Our worked adapter,
-façade, and the Protocol contrast are in `examples/ch11/`.
+agent just rename one method?), and did it depend on a structural shape (a `Protocol`
+/ interface) rather than trying to subclass the library? Then point it at a multi-step
+flow and ask for a Façade — and verify the new door is *smaller* than the subsystem
+behind it. Our worked adapter, façade, and the structural-typing contrast are in
+`examples/ch11/py/` (starter: `adapter.py`) and `examples/ch11/ts/` (`adapter.ts`).
 
 </TryIt>
 
@@ -319,6 +467,9 @@ classDiagram
 **Intent:** make an existing class (usually one you don't own) satisfy the interface
 your code expects, by translating between them.
 
+<LangTabs>
+  <TabItem label="Python">
+
 **Canonical** — the form your agent emits:
 
 ```python
@@ -339,9 +490,36 @@ class SupportsCharge(Protocol):
 # a foreign class already shaped like this satisfies it with no wrapper
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+**Canonical** — the form your agent emits:
+
+```typescript
+class Adapter implements Target {
+  constructor(private readonly adaptee: Adaptee) {}
+  request(): string {
+    const raw = this.adaptee.specificRequest();
+    return `translated(${raw})`;        // the real work: translate to Target
+  }
+}
+```
+
+**Idiomatic** — types are structural, so a matching class needs no adapter:
+
+```typescript
+interface SupportsCharge {
+  charge(amount: number): Receipt;
+}
+// a foreign class already shaped like this IS a SupportsCharge — no `implements`, no wrapper
+```
+
+  </TabItem>
+</LangTabs>
+
 **Reach for it when** you must fit code you don't own to your interface ·
 **not when** you own the code (change it) or the wrapper only renames (pass-through).
-Runnable: `examples/ch11/concept_adapter.py`.
+Runnable: `examples/ch11/py/concept_adapter.py` · `examples/ch11/ts/conceptAdapter.ts`.
 
 </CheatSheet>
 
@@ -363,6 +541,9 @@ classDiagram
 **Intent:** offer one simple interface that coordinates a complex subsystem, so
 callers learn one thing instead of many.
 
+<LangTabs>
+  <TabItem label="Python">
+
 **Canonical** — a façade object over the subsystem:
 
 ```python
@@ -380,9 +561,35 @@ def operation() -> str:
     return SubsystemA().op_a() + SubsystemB().op_b() + SubsystemC().op_c()
 ```
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+**Canonical** — a façade object over the subsystem:
+
+```typescript
+class Facade {
+  private readonly a = new SubsystemA();
+  private readonly b = new SubsystemB();
+  private readonly c = new SubsystemC();
+  operation(): string {
+    return this.a.opA() + this.b.opB() + this.c.opC();
+  }
+}
+```
+
+**Idiomatic** — a free function (or a barrel `index.ts`) is a façade:
+
+```typescript
+const operation = (): string =>
+  new SubsystemA().opA() + new SubsystemB().opB() + new SubsystemC().opC();
+```
+
+  </TabItem>
+</LangTabs>
+
 **Reach for it when** callers repeatedly orchestrate the same subsystem ·
 **not when** the façade just forwards each call 1:1 or re-exposes the whole subsystem.
-Runnable: `examples/ch11/concept_facade.py`.
+Runnable: `examples/ch11/py/concept_facade.py` · `examples/ch11/ts/conceptFacade.ts`.
 
 </CheatSheet>
 
@@ -392,10 +599,11 @@ Runnable: `examples/ch11/concept_facade.py`.
   reduces how much a client must *know* about a subsystem. Make it fit vs. make it
   simple.
 - Adapter is for code you **don't own** and must **translate** — names, units, return
-  shapes. This is where **`Protocol`** shines: depend on a shape, and a foreign class
-  that already matches needs no adapter at all.
-- The Pythonic Façade is often a **module-level function** or a curated `__init__.py`,
-  not a class.
+  shapes. This is where **structural typing** shines (a `Protocol` in Python, a plain
+  interface in TypeScript): depend on a shape, and a foreign class that already matches
+  needs no adapter at all.
+- The lightweight Façade is often a **module-level function** or a curated barrel
+  module (`__init__.py` / `index.ts`), not a class.
 - Both collapse into Chapter 9's **pass-through** when they add no depth. Ousterhout's
   test decides it: a wrapper must hide more than it exposes.
 - These are the AI era's workhorse patterns — and the ones agents most often build as
