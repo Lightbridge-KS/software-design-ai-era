@@ -5,12 +5,12 @@ approved by the editor as the voice standard ("very high-yield and insightful �
 keep this tone"). This file holds verbatim excerpts with annotations naming the
 *moves* they make. When drafting, imitate the moves, not the sentences.
 
-> **TypeScript voice — pending.** All excerpts below are Python prose. The book is
-> now multi-language (see `VISION.md`); the TypeScript "Language Notes" voice needs
-> its own approved exemplars. These will be harvested from the Chapter 13 pilot (the
-> first chapter converted) and added here. Until then, TS prose should carry the same
-> register (warm, anti-dogmatic, idiomatic) — leaning on TS-native truths (structural
-> typing, function literals) rather than transliterating the Python punchlines.
+> **Multi-language note.** The book is multi-language (see `VISION.md`): the neutral
+> concept prose carries the design; each language's "Language Notes" tab carries its
+> own idiom *and* voice. Excerpts 1–4 are Python prose; **Excerpt 5** is the approved
+> TypeScript register (from the Chapter 13 pilot). The rule for TS prose: same warm,
+> anti-dogmatic register, leaning on TS-native truths (structural typing, function
+> literals) — never transliterating the Python punchlines.
 
 ## The register, distilled
 
@@ -92,6 +92,30 @@ competence is conceded in the same breath as its miscalibration.
 **Moves:** a fuzzy judgment call is converted into a sharp test with paired
 examples the reader can pattern-match against; the financial metaphor is extended
 one honest step, then dropped before it becomes a gimmick.
+
+## Excerpt 5 · The TypeScript voice (Language Notes)
+
+> TypeScript's types are **structural**, so a strategy needs no `implements` and no
+> named interface to satisfy — a function literal already *is* the strategy.
+
+> You have been doing this for years too: `[...names].sort((a, b) => a.localeCompare(b))`
+> hands `sort` a comparator — Strategy, built into the language. Any time you pass a
+> callback, you are injecting a strategy.
+
+> **Functions first.** Reach for a `class implements DiscountRule` only when it carries
+> **state** or needs **multiple methods** — the same rule as Python, since the design,
+> not the syntax, decides it.
+
+— Chapter 13, *Language Notes (TypeScript tab)*
+
+**Moves:** the TS tab is **not** a transliteration of the Python tab — it earns the
+same point from a TS-native truth (structural typing makes `implements` optional),
+not from "an algorithm is a value". It dignifies the reader's existing experience
+(`.sort` with a comparator) exactly as the Python tab does with `key=`, but in the
+language's own idiom. And it closes by tying back to the *shared* design rule
+("the design, not the syntax, decides it") — the multi-language thesis in one clause.
+Each language tab should land the chapter's truth through its own idiom, never by
+echoing the other tab's sentences.
 
 ## What this voice does not do
 

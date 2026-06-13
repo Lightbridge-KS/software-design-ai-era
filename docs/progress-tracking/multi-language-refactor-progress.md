@@ -30,10 +30,13 @@ Python is the reference idiom; TypeScript is the parallel track (synced `<LangTa
 
 ## Phase 1 — Pilot: Ch 13 (Strategy & Template Method)
 
-- [ ] examples/ch13 → `py/` + `ts/` (idiomatic TS twins + vitest tests)
-- [ ] MDX: imports, Before/After `###`+LangTabs, Language Notes, 2 cheat sheets dual-lang, paths
-- [ ] STYLE-SAMPLES: harvest approved TS voice exemplars
-- [ ] All gates green; editor review of rendered page; commit
+- [x] examples/ch13 → `py/` (14 pytest) + `ts/` (14 vitest, tsc strict, exercise/) 
+- [x] MDX: imports, Before/After `###`+`####`/LangTabs, Language Notes, 2 cheat sheets dual-lang, paths
+- [x] STYLE-SAMPLES: harvested approved TS voice (Excerpt 5)
+- [x] All gates green; editor-reviewed; committed
+
+**Phase 1 complete.** Pilot locked the pattern: synced `<LangTabs>`, `####` Before/After
+for paired-pattern chapters, dual-language cheat sheets, `examples/chNN/{py,ts}` split.
 
 ## Phase 2 — Pattern chapters
 
