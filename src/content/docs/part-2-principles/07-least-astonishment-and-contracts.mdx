@@ -3,7 +3,8 @@ title: "7. No Surprises: Least Astonishment and Contracts"
 description: "A signature is a promise. Keep it — or fail loudly at the spot you broke it. Preconditions, postconditions, fail-fast, and parse-don't-validate."
 ---
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
@@ -20,10 +21,25 @@ right where you stand, when one is broken. The principle that governs it has a n
 
 Here is a function used all over checkout-lite:
 
+<LangTabs>
+  <TabItem label="Python">
+
 ```python
 def apply_discount(price: float, percent: float) -> float:
     return price - price * percent / 100
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+export function applyDiscount(price: number, percent: number): number {
+  return price - (price * percent) / 100;
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 What is `percent`? The name suggests a percentage, but nothing says whether to pass
 `20` for twenty percent or `0.2`. So callers guess, and they guess differently. One
@@ -67,7 +83,7 @@ negative price on its long journey to the wrong stack trace.
 ```mermaid
 flowchart TD
     Bad["apply_discount(100, 150)"] --> Q{"precondition<br/>checked?"}
-    Q -->|"fail fast (raise here)"| Near["ValueError: percent must be 0–100<br/>error names its cause"]
+    Q -->|"fail fast (raise here)"| Near["error: percent must be 0–100<br/>error names its cause"]
     Q -->|"no check"| Corrupt["returns -50"] --> Far["crash in payment gateway,<br/>3 modules away"]
 ```
 
@@ -77,11 +93,13 @@ that distance is most of what this chapter buys you.
 ## Before / After
 
 The fix is to write the promise down and enforce it: a name that states its units, a
-docstring that states the contract, a precondition that fails fast, and a defined
+comment or doc that states the contract, a precondition that fails fast, and a defined
 postcondition.
 
-<Tabs>
-  <TabItem label="Before">
+### Before
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def apply_discount(price: float, percent: float) -> float:
@@ -89,7 +107,21 @@ def apply_discount(price: float, percent: float) -> float:
 ```
 
   </TabItem>
-  <TabItem label="After">
+  <TabItem label="TypeScript">
+
+```typescript
+export function applyDiscount(price: number, percent: number): number {
+  return price - (price * percent) / 100;
+}
+```
+
+  </TabItem>
+</LangTabs>
+
+### After
+
+<LangTabs>
+  <TabItem label="Python">
 
 ```python
 def apply_percentage_discount(price: float, percent: float) -> float:
@@ -106,14 +138,40 @@ def apply_percentage_discount(price: float, percent: float) -> float:
 ```
 
   </TabItem>
-</Tabs>
+  <TabItem label="TypeScript">
+
+```typescript
+/**
+ * Return `price` reduced by `percent` percent.
+ *
+ * Precondition:  0 <= percent <= 100.
+ * Postcondition: result is non-negative and rounded to cents.
+ */
+export function applyPercentageDiscount(price: number, percent: number): number {
+  if (!(percent >= 0 && percent <= 100)) {
+    throw new RangeError(`percent must be in [0, 100], got ${percent}`);
+  }
+  return Math.round(price * (1 - percent / 100) * 100) / 100;
+}
+```
+
+  </TabItem>
+</LangTabs>
 
 The name now says `percentage`, so the units stop being a guess. The precondition
-`raise`s on bad input — at the boundary, naming the cause. And the postcondition is
-not just documented but *checked*. Which raises the question every Python contract
-eventually asks: why `raise` for the first check and `assert` for the second?
+raises on bad input — at the boundary, naming the cause. And the postcondition is
+guaranteed by construction. Which raises a question worth its own section: when a
+language gives you more than one tool for these checks, which one runs *in
+production* — and which one quietly disappears?
 
-## Pythonic Notes
+## Language Notes
+
+Both languages reach the same contract from different starting points — and the
+difference is itself a lesson: the contract is the *idea*; each language gives you
+different tools to make it bite at compile time, at runtime, or both.
+
+<LangTabs>
+  <TabItem label="Python">
 
 Python gives you three lightweight tools for contracts, and one rule for choosing
 between two of them that prevents a real production bug.
@@ -174,6 +232,85 @@ don't validate, Python-style, means *constructed value objects with validated
 boundaries*, not faith in `mypy`. (A stringly-typed argument with a few fixed values
 has a lighter parser: an `Enum` or `Literal`, so `"shiped"` simply cannot be passed.)
 
+  </TabItem>
+  <TabItem label="TypeScript">
+
+TypeScript splits the contract across two moments — **compile time** and **run
+time** — and knowing which tool lives in which moment is the whole game.
+
+**Types** are the cheapest contract, checked by the compiler before a line runs.
+`percent: number` is weak (every `number` is in range as far as the compiler knows),
+but types can carry far more proof than that, which we will return to in a moment.
+
+**There is no `assert`-stripping problem — but there is a sharper one.** TypeScript
+has no `assert` statement that the toolchain strips, so the Python `-O` trap does not
+exist. The real trap is subtler: **types vanish entirely at runtime.** They are
+erased during compilation, so a `percent: number` annotation does *nothing* to a
+value that arrived from JSON, a form field, or a network call — at that boundary you
+genuinely have an `unknown`, and the compiler's promise covers only the values it
+*saw*. So the rule is: **for preconditions on external input, throw a real runtime
+error** (`throw new Error(...)`, or a custom error class) — the same fail-fast move as
+Python's `raise`, for the same reason. For your own internal invariants, lean on the
+*type system* instead of a runtime check: model the code so the impossible state
+won't compile.
+
+**JSDoc comments** state the contract in words, for the human caller and for the
+agent reading your repo as context.
+
+### Parse, don't validate
+
+This is where TypeScript's structural type system genuinely shines — more than
+Python's does. A *validator* checks a value and hands the same wide type onward:
+after `applyPercentageDiscount` checks `percent`, it is still just a `number`, and the
+next function has no proof it was ever checked. A *parser* turns the input into a
+**narrower type that carries the proof** — and in TypeScript that narrower type can be
+a **branded (opaque) type** the compiler will refuse to fake:
+
+```typescript
+declare const percentBrand: unique symbol;
+export type Percent = number & { readonly [percentBrand]: true };
+
+export function percent(value: number): Percent {
+  if (!(value >= 0 && value <= 100)) {
+    throw new RangeError(`percent must be in [0, 100], got ${value}`);
+  }
+  return value as Percent; // the lone place the brand is applied
+}
+
+export function discount(price: number, pct: Percent): number {
+  return Math.round(price * (1 - pct / 100) * 100) / 100;
+}
+```
+
+Now `discount` does no checking — it *cannot* receive an invalid percentage, because
+a plain `number` is not assignable to `Percent`. The compiler rejects
+`discount(100, 20)` and forces every caller through `percent(...)`, the one parser
+that throws. This is the constructive form of *make illegal states unrepresentable*,
+and here the guarantee lives partly in the compiler (a class with a private brand, or
+a `class Percent` whose constructor validates, gives the same protection). You throw
+once, in the parser, and afterward there is nothing left to re-check.
+
+The boundary deserves one more move. External input is honestly typed `unknown` —
+not `number` — so the parser starts by narrowing the type, *then* validates the value:
+
+```typescript
+export function parsePercentFromInput(raw: unknown): Percent {
+  if (typeof raw !== "number") {
+    throw new TypeError(`percent must be a number, got ${typeof raw}`);
+  }
+  return percent(raw);
+}
+```
+
+Take `unknown` (never `any`, which would silently disable the very checks you need)
+at the edge, parse it into `Percent`, and the rest of the program holds a value that
+is guaranteed valid *by its type*. (For a fixed set of string values, the lighter
+parser is a string-literal union plus an exhaustive check, so `"shiped"` simply will
+not type-check.)
+
+  </TabItem>
+</LangTabs>
+
 ## When NOT to Use
 
 <Aside type="caution" title="Right-sizing">
@@ -187,16 +324,17 @@ has its own runaway form, **value-object soup**: a bespoke type for every primit
 `FirstName` and `MiddleName` and `Suffix`, until the code drowns in wrappers that
 guard no real invariant. That is Chapter 4's confetti and Chapter 6's accessor
 ceremony in a new costume. Parse at *meaningful* boundaries, for values with *real*
-invariants; a plain `str` for a name is correct, and a docstring that merely restates
-the type hint is noise.
+invariants; a plain string for a name is correct, and a doc comment that merely
+restates the type is noise.
 </Aside>
 
 ## 🤖 AI Collaboration
 
 Agents are fluent at producing confident names — which is exactly the risk: a
 function called `get_user` that also writes to the database reads perfectly and
-astonishes completely. They also tend to reach for `assert` to validate input
-(wrong) and to scatter defensive checks (overkill). The vocabulary below steers both.
+astonishes completely. They also reach for the wrong validation tool — a strippable
+`assert` in Python, a swallowed error or an `any` cast in TypeScript — and scatter
+defensive checks everywhere (overkill). The vocabulary below steers both.
 
 <AICollab>
 
@@ -206,11 +344,11 @@ astonishes completely. They also tend to reach for `assert` to validate input
 
 | You say | The agent hears |
 |---|---|
-| "Add a precondition that fails fast" | `raise` at the boundary on invalid input; don't return a wrong value |
-| "State the pre/postconditions in the docstring" | Write the contract down for the next caller |
-| "Use `assert` only for internal invariants" | Not for input validation — `-O` strips it |
+| "Add a precondition that fails fast" | Throw a real error at the boundary on invalid input (`raise` / `throw`); don't return a wrong value |
+| "State the pre/postconditions in the doc" | Write the contract down for the next caller (docstring / JSDoc) |
+| "Don't use a strippable check for input" | No `assert` in Python (`-O` strips it); no swallowed error or `any` cast in TS |
 | "Parse, don't validate" | Turn input into a type that carries its own proof; trust it after |
-| "Make illegal states unrepresentable" | Use a value object / `Enum` / `Literal` so the bad value can't exist |
+| "Make illegal states unrepresentable" | Use a value object / `Enum` / `Literal` (Python) or a branded type / literal union (TS) so the bad value can't exist |
 | "This name is misleading" | The behavior doesn't match the promise — rename or split |
 
 </VocabTable>
@@ -219,54 +357,60 @@ astonishes completely. They also tend to reach for `assert` to validate input
 
 <PromptCard title="Add a contract, fail fast">
 
-This function does no validation. Add a precondition that `raise`s a `ValueError` at
-the boundary on invalid input (not an `assert` — it must survive `python -O`), state
-the pre- and postconditions in the docstring, and make the name reflect what it
-actually does and in what units. Don't add defensive checks to functions that only
+This function does no validation. Add a precondition that throws a real, named error
+at the boundary on invalid input — in Python a `raise` (not an `assert`, which `-O`
+strips); in TypeScript a thrown `Error`/custom error (not a swallowed default).
+State the pre- and postconditions in the doc comment, and make the name reflect what
+it actually does and in what units. Don't add defensive checks to functions that only
 receive already-validated data.
 
 </PromptCard>
 
 <PromptCard title="Parse, don't validate">
 
-Replace this repeated validation with a parsed value object: a small `frozen`
-dataclass (or an `Enum`/`Literal` if it's a fixed set) that validates once in
-`__post_init__`, so an invalid value cannot be constructed. Change the downstream
-functions to take that type and stop re-checking.
+Replace this repeated validation with a parsed type that cannot be constructed
+invalid — in Python a small `frozen` dataclass (or an `Enum`/`Literal` for a fixed
+set) validated once at construction; in TypeScript a branded/opaque type with a single
+parser function (or a literal union) that throws on bad input. Change the downstream
+functions to take that type and stop re-checking. At the system edge, accept the input
+as `unknown` and narrow it in the parser.
 
 </PromptCard>
 
 ### Review checklist
 
 - [ ] Does the name match the behavior — no hidden side effects (a `get_` that writes)?
-- [ ] Preconditions on external input use `raise`, and fail at the boundary?
-- [ ] Is `assert` used *only* for internal invariants/postconditions?
+- [ ] Preconditions on external input throw a real error, and fail at the boundary?
+- [ ] No strippable/erasable check guarding input (`assert` in Python; an `any` cast in TS)?
 - [ ] Where a value has a real invariant, is it a parsed type rather than re-checked?
 - [ ] Reverse check: any defensive walls on already-trusted internal data?
 
 ### Agent failure modes
 
-- **`assert` for input.** The agent guards external input with `assert`; it works in
-  tests and silently vanishes under `-O`. Insist on `raise` for preconditions.
+- **The strippable check for input.** In Python the agent guards external input with
+  `assert` — it works in tests and silently vanishes under `-O`. In TypeScript it
+  trusts a type annotation on what is really an `unknown` from the wire. Insist on a
+  real runtime check that throws at the boundary.
 - **The confident misnomer.** It names a function for what you asked, not for what the
   code does — `validate_order` that also saves it. Chapter 1's plausible-but-wrong,
   wearing a function name. Read the body against the name.
-- **Error swallowing.** Instead of failing fast, it returns `None` or a default on bad
-  input, pushing the crash downstream. Fail at the source.
+- **Error swallowing.** Instead of failing fast, it returns `None`/`null` or a default
+  on bad input, pushing the crash downstream. Fail at the source.
 - **The defensive wall.** Asked for "robust" code, it validates every argument of
   every helper. Boundary, not everywhere.
 
 </AICollab>
 
-<TryIt starter="examples/ch07/before.py">
+<TryIt starter="examples/ch07/py/before.py">
 
 Take the uncontracted `apply_discount` (or a function of your own with an ambiguous
 argument) and run the **add-a-contract** prompt. Check the result on the two axes this
-chapter cares about: did the agent use `raise` for the precondition (not `assert`),
-and did it stop at the boundary rather than walling every helper? Then try the
-**parse-don't-validate** prompt and see whether the downstream code genuinely stops
-re-checking. Our worked version — contract, fail-fast, and a `Percent` that can't be
-constructed invalid — is in `examples/ch07/`.
+chapter cares about: did the agent fail fast with a real thrown error at the boundary
+(not a strippable `assert` or a swallowed default), and did it stop at the boundary
+rather than walling every helper? Then try the **parse-don't-validate** prompt and see
+whether the downstream code genuinely stops re-checking. Our worked version — contract,
+fail-fast, and a `Percent` that can't be constructed invalid — is in
+`examples/ch07/py/` (Python) and `examples/ch07/ts/` (TypeScript).
 
 </TryIt>
 
@@ -279,11 +423,14 @@ constructed invalid — is in `examples/ch07/`.
   postconditions (yours), invariants (always true). And **fail fast** — stop at the
   boundary with an error that names its cause, instead of letting a wrong value crash
   far away.
-- In Python: `raise` for preconditions on external input (always runs); `assert`
-  *only* for internal invariants (`-O` strips it); docstrings for the words.
+- Pick the check that runs in production: in Python `raise` for preconditions on
+  external input, `assert` *only* for internal invariants (`-O` strips it); in
+  TypeScript a thrown error for input (types are erased at runtime), the type system
+  for internal invariants.
 - **Parse, don't validate**: turn input into a type that carries its own proof, so
   downstream code can't receive an invalid value and never re-checks. In Python the
-  proof lives in a value object validated at construction, not in the compiler.
+  proof lives in a value object validated at construction; in TypeScript a branded type
+  with a single parser puts part of that proof into the compiler.
 - Right-size it: validate at the boundary and trust inside; don't build assertion
   walls or a bespoke type for every primitive.
 - **Glossary terms added:** *Principle of Least Astonishment · precondition ·
