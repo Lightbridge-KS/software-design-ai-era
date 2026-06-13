@@ -8,17 +8,22 @@ sidebar:
 {/*
   CONCEPT-CHAPTER TEMPLATE (Parts II–IV) — copy this file to start a chapter.
   The 8 sections below are fixed: no additions, no omissions, this order.
+  MULTI-LANGUAGE: from Part II, every code listing is Python + TypeScript inside
+  a <LangTabs> (synced syncKey="lang"); labels are exactly "Python" then
+  "TypeScript". Neutral prose/diagrams stay outside any tab. Part I is
+  Python-reference only.
   Pattern chapters (Part III) extend §2–3 with: Desired design features →
   Before → After, and add a "Choosing between X and Y" subsection when the
   chapter pairs patterns. They also add a "## Pattern Cheat Sheet" section
   before Key Takeaways (one <CheatSheet> card per pattern — see below); the
   GENERIC canonical classDiagram lives in the cheat sheet, so §2 uses prose or
   a DOMAIN diagram, not the generic model.
-  MDX components (<AICollab>, <VocabTable>, <PromptCard>, <TryIt>, <CheatSheet>)
-  are created alongside Chapter 13.
+  MDX components (<AICollab>, <VocabTable>, <PromptCard>, <TryIt>, <CheatSheet>,
+  <LangTabs>) live in src/components/.
 */}
 
-import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import { TabItem, Aside } from '@astrojs/starlight/components';
+import LangTabs from '../../../components/LangTabs.astro';
 import CheatSheet from '../../../components/CheatSheet.astro';
 
 ## The Itch
@@ -35,23 +40,68 @@ import CheatSheet from '../../../components/CheatSheet.astro';
 
 ## Before / After
 
-{/* Python 3.10+, full type hints, runnable, ≤40 lines per block.
-    Use Tabs: the tangle → the design. */}
+{/* Sequential ### subsections (the reader scrolls the tangle → the design).
+    Each listing is one <LangTabs>: Python then TypeScript, ≤40 lines, runnable,
+    idiomatic per language (not transliterated). */}
 
-<Tabs>
-  <TabItem label="Before">
-    {/* the tangle */}
+### Before
+
+<LangTabs>
+  <TabItem label="Python">
+
+```python
+# the tangle, Python
+```
+
   </TabItem>
-  <TabItem label="After">
-    {/* the design */}
+  <TabItem label="TypeScript">
+
+```typescript
+// the tangle, TypeScript
+```
+
   </TabItem>
-</Tabs>
+</LangTabs>
 
-## Pythonic Notes
+### After
 
-{/* How Python's features change the classical form: first-class functions,
-    Protocols, dataclasses, match, generators. When the lightweight form
-    beats the classical class-based form — and when it doesn't. */}
+<LangTabs>
+  <TabItem label="Python">
+
+```python
+# the design, Python
+```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript
+// the design, TypeScript
+```
+
+  </TabItem>
+</LangTabs>
+
+## Language Notes
+
+{/* The one section whose prose is language-specific — wrap the whole body in a
+    <LangTabs>. Python tab: Pythonic deflation (functions, Protocols, dataclasses,
+    match, generators). TypeScript tab: idiomatic TS (structural typing, function
+    literals, Record, readonly, discriminated-union switch). When the lightweight
+    form beats the classical class-based one — and when it doesn't. */}
+
+<LangTabs>
+  <TabItem label="Python">
+
+{/* Pythonic notes + code */}
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+{/* TypeScript notes + code */}
+
+  </TabItem>
+</LangTabs>
 
 ## When NOT to Use
 
@@ -82,23 +132,34 @@ import CheatSheet from '../../../components/CheatSheet.astro';
     against the review checklist above. */}
 
 {/* PATTERN CHAPTERS ONLY (Part III): the end-of-chapter reference card, one
-    per pattern. The generic canonical classDiagram lives here. Pair the
-    canonical (classical GoF) form with the Pythonic form — the book's
-    signature move. Back each card with a runnable examples/chNN/concept_*.py. */}
+    per pattern. Mermaid / intent / when stay language-neutral; only the code
+    splits into a <LangTabs>. Pair the canonical (classical GoF) form with the
+    idiomatic form — the book's signature move. Back each card with runnable
+    examples/chNN/py/concept_*.py and examples/chNN/ts/concept_*.ts. */}
 
 ## Pattern Cheat Sheet
 
 <CheatSheet pattern="<Pattern name>">
 
-{/* ```mermaid classDiagram``` — the GENERIC canonical roles, ≤7 nodes */}
+{/* ```mermaid classDiagram``` — the GENERIC canonical roles, ≤7 nodes (neutral) */}
 
-{/* **Intent:** one sentence. */}
+{/* **Intent:** one sentence. (neutral) */}
 
-{/* **Canonical** — the form your agent emits (compact classical skeleton). */}
+<LangTabs>
+  <TabItem label="Python">
 
-{/* **Pythonic** — what you'll usually write (the deflation), when one exists. */}
+{/* **Canonical** — classical GoF skeleton. **Pythonic** — the deflation. */}
 
-{/* **Reach for it when** … · **not when** … · Runnable: examples/chNN/concept_*.py */}
+  </TabItem>
+  <TabItem label="TypeScript">
+
+{/* **Canonical** — classical skeleton. **Idiomatic** — the TS-native form. */}
+
+  </TabItem>
+</LangTabs>
+
+{/* **Reach for it when** … · **not when** … (neutral)
+    Runnable: examples/chNN/py/concept_*.py · examples/chNN/ts/concept_*.ts */}
 
 </CheatSheet>
 

@@ -14,11 +14,11 @@ Full design document: `docs/book-design-software-design-for-humans-and-ai.md`.
 > **North star — read `VISION.md` first.** The book is going **multi-language**:
 > patterns and principles are the constants, the **language is the variable**. Python
 > is the reference idiom (the chapters drafted so far are the Python tab); **TypeScript**
-> is added per chapter via Starlight synced Tabs. One fixed domain spine (checkout-lite);
-> no domain themes. The multi-language refactor — of the existing chapters, the
-> Python-specific Code/Structure rules below, and the template — is **deferred but
-> committed**; new structural work should assume the multi-language structure described
-> in `VISION.md`.
+> is added per chapter via Starlight synced Tabs (the `<LangTabs>` component). One fixed
+> domain spine (checkout-lite); no domain themes. The multi-language refactor is **in
+> progress** — see `docs/progress-tracking/multi-language-refactor-progress.md`. Part I
+> (Ch 1–3) stays Python-reference; full Python+TypeScript parallel from Part II onward.
+> The rules below already reflect the multi-language structure.
 
 ## Settled Editorial Decisions
 
@@ -28,9 +28,12 @@ These were decided by the editor — do not relitigate without being asked:
    chapters (Strategy: pricing/shipping rules · State: order lifecycle · Observer:
    order events · Factory/Adapter: payment providers · Façade: the checkout API).
    One-off everyday examples (exporters, parsers, configs) are fine where clearer.
-2. **Interface style:** teach both, **ABC as the default** (`I*` prefix naming).
-   Decision rule taught explicitly: you control both sides → ABC; retrofitting
-   third-party code / structural typing → `Protocol` (shines in Chapter 11, Adapter).
+2. **Interface style:** in Python, teach both, **ABC as the default** (`I*` prefix
+   naming). Decision rule taught explicitly: you control both sides → ABC; retrofitting
+   third-party code / structural typing → `Protocol` (shines in Chapter 11, Adapter). In
+   **TypeScript**, interfaces are *structural by default* — there is no ABC-vs-Protocol
+   choice. This is a cross-language teaching contrast, not a reversal: Python makes
+   nominal-vs-structural an explicit decision; TS makes structural the default.
 3. **Agent flavor:** **strictly agent-neutral.** Prompts and exercises must work with
    any capable coding agent. Refer to "your agent", never a product name, in prose.
    Core primitives (AGENTS.md, skills, MCP) are named generically since they work
@@ -60,10 +63,15 @@ These were decided by the editor — do not relitigate without being asked:
 - Pattern chapters (Part III) extend sections 2–3 with: *Desired design features →
   Before → After*, plus a *"Choosing between X and Y"* section when the chapter pairs
   patterns. They also add a **`## Pattern Cheat Sheet`** section before Key Takeaways:
-  one `<CheatSheet>` card per pattern, each with the generic canonical classDiagram +
-  intent + **canonical (classical GoF) skeleton paired with the Pythonic form** +
-  when/not-when, backed by a runnable `examples/chNN/concept_*.py`. The generic model
-  lives in the cheat sheet, so §2 uses prose or a *domain* diagram, not the generic one.
+  one `<CheatSheet>` card per pattern. The card's Mermaid classDiagram, intent, and
+  when/not-when stay **language-neutral**; only the code splits into a `<LangTabs>` —
+  Python (Canonical + **Pythonic**) and TypeScript (Canonical + **Idiomatic**) — with a
+  `Runnable:` line listing both `examples/chNN/py/concept_*.py` and
+  `examples/chNN/ts/concept_*.ts`. The generic model lives in the cheat sheet, so §2 uses
+  prose or a *domain* diagram, not the generic one.
+- §4 of the template is **`## Language Notes`** (formerly "Pythonic Notes"): the one
+  section whose prose is language-specific, wrapped in a `<LangTabs>` (Python idiom +
+  TypeScript idiom). All other sections stay language-neutral.
 - **Every chapter adds rows to `glossary.yaml`** (the single source of truth for
   Appendix A) in the same change set. Each entry has the 4 phrasebook fields —
   definition, why-it-matters, prompt-phrasing, anti-phrase.
@@ -72,12 +80,21 @@ These were decided by the editor — do not relitigate without being asked:
 
 ## Code Rules
 
-- Python 3.10+, full type hints, runnable.
+- **Two languages** (from Part II): **Python** (reference idiom; 3.10+, full type hints)
+  and **TypeScript** (strict, explicit annotations, no `any`). Each design realized
+  *idiomatically* per language — not transliterated. Examples live in
+  `examples/chNN/py/` and `examples/chNN/ts/`, each runnable and tested (pytest; vitest +
+  `tsc`). Part I (Ch 1–3) is Python-reference only.
+- **Language toggle:** every code listing with a language realization uses the
+  `<LangTabs>` component (it wraps Starlight `<Tabs syncKey="lang">`), with `<TabItem>`
+  labels exactly **`Python`** then **`TypeScript`** — synced tabs match by label, so any
+  drift silently breaks the book-wide toggle. Never write a bare `<Tabs>` for languages.
+- **Before/After** are sequential `###` subsections (the reader scrolls), each code
+  listing wrapped in a `<LangTabs>`. Tabs are the *language* axis only — never the
+  before/after axis.
 - Keep prose examples short (~40 lines as a soft target; longer code → companion
-  examples repo) — but never split one coherent design across multiple tabs to meet
-  the limit. The reader should scroll one block, not click between halves of an idea.
-- Before/After/Pythonic variants in Starlight `<Tabs>` — tabs separate *alternatives*,
-  not parts of the same listing.
+  examples repo) — but never split one coherent design to meet the limit. The reader
+  should scroll one block, not click between halves of an idea.
 
 ## Diagram Rules
 

@@ -1,0 +1,15 @@
+---
+// Language toggle for code listings. Wraps Starlight's <Tabs> with a fixed
+// syncKey so the reader's language choice ("Python" / "TypeScript") persists
+// across every code block in the whole book.
+//
+// Children MUST be <TabItem>s whose labels are exactly "Python" and
+// "TypeScript", in that order — Starlight's synced tabs match by label, so any
+// drift (e.g. "Typescript", "TS") silently breaks the sync. Always use this
+// wrapper instead of a bare <Tabs> for language listings.
+import { Tabs } from '@astrojs/starlight/components';
+---
+
+<Tabs syncKey="lang">
+  <slot />
+</Tabs>

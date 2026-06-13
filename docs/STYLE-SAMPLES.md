@@ -5,6 +5,13 @@ approved by the editor as the voice standard ("very high-yield and insightful �
 keep this tone"). This file holds verbatim excerpts with annotations naming the
 *moves* they make. When drafting, imitate the moves, not the sentences.
 
+> **TypeScript voice — pending.** All excerpts below are Python prose. The book is
+> now multi-language (see `VISION.md`); the TypeScript "Language Notes" voice needs
+> its own approved exemplars. These will be harvested from the Chapter 13 pilot (the
+> first chapter converted) and added here. Until then, TS prose should carry the same
+> register (warm, anti-dogmatic, idiomatic) — leaning on TS-native truths (structural
+> typing, function literals) rather than transliterating the Python punchlines.
+
 ## The register, distilled
 
 - **Scene before concept.** The reader feels the itch in a concrete scenario

@@ -396,9 +396,10 @@ book/
   - `<VocabTable>` — the "you say / agent hears" table
   - `<PromptCard>` — copy-button prompt template
   - `<TryIt>` — exercise block with a link to the starter file
-  - `<CheatSheet>` — the end-of-chapter pattern reference card (Part III): UML + intent + canonical + Pythonic + when-to-use
+  - `<CheatSheet>` — the end-of-chapter pattern reference card (Part III): neutral UML + intent + when-to-use, with code in a `<LangTabs>` (canonical + idiom per language)
+  - `<LangTabs>` — the language toggle (wraps Starlight `<Tabs syncKey="lang">`); see `VISION.md` for the multi-language structure
   - Starlight's built-in `<Aside type="caution">` for "When NOT to use"
-- **Code tabs:** Starlight's `<Tabs>` for *Before / After / Pythonic* variants of each example.
+- **Language tabs:** from Part II, every code listing is Python + TypeScript inside a `<LangTabs>` (synced book-wide by label). Before/After are sequential `###` subsections, each a `<LangTabs>` — the tab axis is *language*, not before/after. See `VISION.md`.
 - **Frontmatter pattern:**
 
 ```yaml
