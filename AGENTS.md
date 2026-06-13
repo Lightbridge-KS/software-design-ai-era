@@ -49,8 +49,12 @@ These were decided by the editor — do not relitigate without being asked:
 - Every concept chapter (Parts II–IV) follows the 8-section template in
   `docs/chapter-template.mdx`. No new sections outside the template.
 - Pattern chapters (Part III) extend sections 2–3 with: *Desired design features →
-  Before → After → Generic model (Mermaid classDiagram)*, plus a *"Choosing between
-  X and Y"* section when the chapter pairs patterns.
+  Before → After*, plus a *"Choosing between X and Y"* section when the chapter pairs
+  patterns. They also add a **`## Pattern Cheat Sheet`** section before Key Takeaways:
+  one `<CheatSheet>` card per pattern, each with the generic canonical classDiagram +
+  intent + **canonical (classical GoF) skeleton paired with the Pythonic form** +
+  when/not-when, backed by a runnable `examples/chNN/concept_*.py`. The generic model
+  lives in the cheat sheet, so §2 uses prose or a *domain* diagram, not the generic one.
 - **Every chapter adds rows to `glossary.yaml`** (the single source of truth for
   Appendix A) in the same change set. Each entry has the 4 phrasebook fields —
   definition, why-it-matters, prompt-phrasing, anti-phrase.

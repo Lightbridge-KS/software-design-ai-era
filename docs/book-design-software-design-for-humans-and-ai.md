@@ -245,7 +245,7 @@ Consistency is itself a design statement — readers (and agents pointed at the 
 └──────────────────────────────────────────────────────────────┘
 ```
 
-Pattern chapters (Part III) extend section 2–3 with Mak-style sub-beats, which work well: *Desired design features → Before → After → Generic model (Mermaid classDiagram)* — plus a *"Choosing between X and Y"* section when the chapter pairs patterns.
+Pattern chapters (Part III) extend section 2–3 with Mak-style sub-beats, which work well: *Desired design features → Before → After* — plus a *"Choosing between X and Y"* section when the chapter pairs patterns. They also close (before Key Takeaways) with a **Pattern Cheat Sheet**: one `<CheatSheet>` card per pattern, holding the generic canonical `classDiagram` + intent + the **classical GoF skeleton paired with the Pythonic form** + when/not-when, each backed by a runnable `examples/chNN/concept_*.py` (the refactoring.guru-style downloadable). The generic model lives in the cheat sheet; §2 may keep a *domain* diagram.
 
 ### Worked sample of the template: Chapter 13 (Strategy), abridged
 
@@ -396,6 +396,7 @@ book/
   - `<VocabTable>` — the "you say / agent hears" table
   - `<PromptCard>` — copy-button prompt template
   - `<TryIt>` — exercise block with a link to the starter file
+  - `<CheatSheet>` — the end-of-chapter pattern reference card (Part III): UML + intent + canonical + Pythonic + when-to-use
   - Starlight's built-in `<Aside type="caution">` for "When NOT to use"
 - **Code tabs:** Starlight's `<Tabs>` for *Before / After / Pythonic* variants of each example.
 - **Frontmatter pattern:**
@@ -445,7 +446,7 @@ CLAUDE.md (book repo)
 ├── STRUCTURE RULES
 │   ├── Every concept chapter follows the 8-section template (§4)
 │   ├── Every chapter MUST add rows to glossary.yaml (4 fields each)
-│   └── MDX components: <AICollab>, <VocabTable>, <PromptCard>, <TryIt>
+│   └── MDX components: <AICollab>, <VocabTable>, <PromptCard>, <TryIt>, <CheatSheet>
 ├── CODE RULES
 │   ├── Python 3.10+, full type hints, runnable
 │   ├── Every example has a matching test in examples/chNN/test_*.py

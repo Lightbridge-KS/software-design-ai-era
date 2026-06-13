@@ -9,13 +9,17 @@ sidebar:
   CONCEPT-CHAPTER TEMPLATE (Parts II–IV) — copy this file to start a chapter.
   The 8 sections below are fixed: no additions, no omissions, this order.
   Pattern chapters (Part III) extend §2–3 with: Desired design features →
-  Before → After → Generic model (Mermaid classDiagram), and add a
-  "Choosing between X and Y" subsection when the chapter pairs patterns.
-  MDX components (<AICollab>, <VocabTable>, <PromptCard>, <TryIt>) are created
-  alongside Chapter 13 — until then, the placeholders show intent.
+  Before → After, and add a "Choosing between X and Y" subsection when the
+  chapter pairs patterns. They also add a "## Pattern Cheat Sheet" section
+  before Key Takeaways (one <CheatSheet> card per pattern — see below); the
+  GENERIC canonical classDiagram lives in the cheat sheet, so §2 uses prose or
+  a DOMAIN diagram, not the generic model.
+  MDX components (<AICollab>, <VocabTable>, <PromptCard>, <TryIt>, <CheatSheet>)
+  are created alongside Chapter 13.
 */}
 
 import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import CheatSheet from '../../../components/CheatSheet.astro';
 
 ## The Itch
 
@@ -76,6 +80,27 @@ import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 {/* Hands-on exercise: starter file + a prompt to run + grade the result
     against the review checklist above. */}
+
+{/* PATTERN CHAPTERS ONLY (Part III): the end-of-chapter reference card, one
+    per pattern. The generic canonical classDiagram lives here. Pair the
+    canonical (classical GoF) form with the Pythonic form — the book's
+    signature move. Back each card with a runnable examples/chNN/concept_*.py. */}
+
+## Pattern Cheat Sheet
+
+<CheatSheet pattern="<Pattern name>">
+
+{/* ```mermaid classDiagram``` — the GENERIC canonical roles, ≤7 nodes */}
+
+{/* **Intent:** one sentence. */}
+
+{/* **Canonical** — the form your agent emits (compact classical skeleton). */}
+
+{/* **Pythonic** — what you'll usually write (the deflation), when one exists. */}
+
+{/* **Reach for it when** … · **not when** … · Runnable: examples/chNN/concept_*.py */}
+
+</CheatSheet>
 
 ## Key Takeaways
 

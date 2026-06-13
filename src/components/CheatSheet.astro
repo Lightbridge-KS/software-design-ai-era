@@ -1,0 +1,41 @@
+---
+// The end-of-chapter "reference card" for a single pattern: UML + intent +
+// canonical skeleton + Pythonic form + when-to-reach-for-it.
+// Keep the `## Pattern Cheat Sheet` markdown heading OUTSIDE this component so
+// it appears in the page table of contents; one <CheatSheet> per pattern.
+interface Props {
+  pattern: string;
+}
+const { pattern } = Astro.props;
+---
+
+<aside class="cheat-sheet">
+  <p class="cheat-sheet-title">📇 {pattern}</p>
+  <div class="cheat-sheet-body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .cheat-sheet {
+    margin: 1.5rem 0;
+    border: 1px solid var(--sl-color-accent);
+    border-radius: 0.6rem;
+    background: var(--sl-color-bg);
+    overflow: hidden;
+  }
+  .cheat-sheet-title {
+    margin: 0;
+    padding: 0.5rem 1rem;
+    background: var(--sl-color-accent-low);
+    border-bottom: 1px solid var(--sl-color-accent);
+    font-weight: 700;
+    font-size: var(--sl-text-base);
+  }
+  .cheat-sheet-body {
+    padding: 0.5rem 1.25rem 1rem;
+  }
+  .cheat-sheet-body :global(p:first-child) {
+    margin-top: 0.5rem;
+  }
+</style>

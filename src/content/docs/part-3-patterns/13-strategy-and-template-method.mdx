@@ -8,6 +8,7 @@ import AICollab from '../../../components/AICollab.astro';
 import VocabTable from '../../../components/VocabTable.astro';
 import PromptCard from '../../../components/PromptCard.astro';
 import TryIt from '../../../components/TryIt.astro';
+import CheatSheet from '../../../components/CheatSheet.astro';
 
 <Aside type="note" title="The running example: checkout-lite">
 Throughout the book we grow one small order-processing module, **checkout-lite**:
@@ -439,6 +440,97 @@ agent try to build more than the prompt allowed? Full instructions in
 `examples/ch13/exercise/EXERCISE.md`.
 
 </TryIt>
+
+## Pattern Cheat Sheet
+
+<CheatSheet pattern="Strategy">
+
+```mermaid
+classDiagram
+    class Context {
+        -strategy: Strategy
+        +do_work(data)
+    }
+    class Strategy {
+        <<interface>>
+        +execute(data)
+    }
+    Context o--> Strategy : injected
+    Strategy <|.. AscendingStrategy
+    Strategy <|.. DescendingStrategy
+```
+
+**Intent:** encapsulate interchangeable algorithms behind one interface and
+inject the chosen one, so adding a variant never edits the existing ones.
+
+**Canonical** — the form your agent emits:
+
+```python
+class Strategy(ABC):
+    @abstractmethod
+    def execute(self, data): ...
+
+class Context:
+    def __init__(self, strategy: Strategy) -> None:
+        self._strategy = strategy
+    def do_work(self, data):
+        return self._strategy.execute(data)
+```
+
+**Pythonic** — a strategy is a function; a registry selects one:
+
+```python
+STRATEGIES: dict[str, Callable] = {"asc": sorted,
+                                   "desc": lambda d: sorted(d, reverse=True)}
+```
+
+**Reach for it when** the *whole* algorithm varies and variation is expected ·
+**not when** there are two stable branches (keep the `if`) or a class hierarchy
+exists only to hold one method. Use a class strategy only when it carries state.
+Runnable: `examples/ch13/concept_strategy.py`.
+
+</CheatSheet>
+
+<CheatSheet pattern="Template Method">
+
+```mermaid
+classDiagram
+    class AbstractFlow {
+        <<abstract>>
+        +run()
+        +step_one()*
+        +step_two()*
+        +hook()
+    }
+    AbstractFlow <|-- ConcreteFlow
+    AbstractFlow <|-- CustomFlow
+```
+
+**Intent:** fix an algorithm's *skeleton* in a base method; let subclasses supply
+the varying steps. The step order is the invariant they cannot change.
+
+**Canonical** — the skeleton plus abstract steps and an optional hook:
+
+```python
+class AbstractFlow(ABC):
+    def run(self):                       # the template method — never overridden
+        return [self.step_one(), self.step_two(), self.hook()]
+    @abstractmethod
+    def step_one(self): ...
+    @abstractmethod
+    def step_two(self): ...
+    def hook(self): return "default"     # optional override
+```
+
+**Pythonic** — for a couple of steps, pass them as functions instead of
+subclassing: `run(step_one=..., step_two=...)`. Earn the ABC when steps share
+defaults or come in families.
+
+**Reach for it when** the sequence is invariant but steps differ ·
+**not when** the whole algorithm varies (that's Strategy) or there's one
+subclass. Runnable: `examples/ch13/concept_template_method.py`.
+
+</CheatSheet>
 
 ## Key Takeaways
 

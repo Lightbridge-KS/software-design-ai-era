@@ -649,6 +649,70 @@ terms:
       "A layer that translates types, enforces a contract, or isolates a
       third-party API is not a pass-through — keep it."
 
+  - term: factory function
+    chapter: 10
+    definition: >
+      A function that builds and returns an object chosen at runtime, hiding
+      the concrete class from callers — in Python, typically backed by a
+      registry dict of classes (a class is itself a callable constructor).
+    why_it_matters: >
+      Centralizes construction in one place, so adding a type is one
+      registration and no call site changes — open-closed for creation.
+    prompt_phrasing: >
+      "Use a factory function backed by a registry dict; adding a type should
+      be one registration."
+    anti_phrase: >
+      "A factory for a single type is ceremony — construct directly until two
+      or more types are chosen at runtime from data."
+
+  - term: factory method
+    chapter: 10
+    definition: >
+      A creational pattern in which a base class defers instantiation to an
+      overridable method, letting each subclass decide which concrete type to
+      create.
+    why_it_matters: >
+      Fits when a class hierarchy already exists and each subclass must build
+      its own collaborator.
+    prompt_phrasing: >
+      "Use a Factory Method — an overridable make_* method the subclasses
+      implement."
+    anti_phrase: >
+      "Only when the hierarchy exists for other reasons; otherwise a factory
+      function does the same in one line without a class."
+
+  - term: abstract factory
+    chapter: 10
+    definition: >
+      A creational pattern that builds a family of related objects through one
+      interface, so the members stay mutually consistent.
+    why_it_matters: >
+      Prevents mismatched combinations when several objects must come from the
+      same family (e.g. a gateway with its matching refund handler).
+    prompt_phrasing: >
+      "Use an Abstract Factory to build the whole family behind one
+      interface."
+    anti_phrase: >
+      "Rarely needed — demand a real family that must stay consistent; most
+      'families' are one object wearing a crowd."
+
+  - term: Singleton (and the module-level alternative)
+    chapter: 10
+    definition: >
+      A pattern ensuring a class has exactly one instance with global access.
+      In Python usually unnecessary: a module is already a singleton, so a
+      module-level instance gives one shared object without the machinery.
+    why_it_matters: >
+      You sometimes need one shared instance, but a Singleton is global state
+      — hidden dependencies, hard to substitute in tests. The module-level
+      instance gives the guarantee and stays injectable.
+    prompt_phrasing: >
+      "Use a module-level instance, not a Singleton class; make it injectable
+      for tests."
+    anti_phrase: >
+      "Prefer the module-level instance almost always; reach for a Singleton
+      class only with a concrete reason the module form can't meet."
+
   - term: Strategy pattern
     chapter: 13
     definition: >
