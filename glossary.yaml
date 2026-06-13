@@ -906,3 +906,71 @@ terms:
     anti_phrase: >
       "No speculative hooks — add an override point when the second variant
       asks for it, not before."
+
+  - term: Observer pattern
+    chapter: 14
+    definition: >
+      Define a one-to-many dependency in which a subject notifies a list of
+      subscribers when something happens, without knowing who they are
+      (publish/subscribe at codebase scale).
+    why_it_matters: >
+      Decouples who reacts from the thing that changed: a new reaction is one
+      subscribe() call and zero edits to the publishing flow (Open-Closed for
+      reactions).
+    prompt_phrasing: >
+      "Refactor to the Observer pattern: the flow publishes one event;
+      reactions are subscribers registered at the edge. Subscribers are plain
+      functions."
+    anti_phrase: >
+      "Don't add an event bus for a single known listener — just call it. No
+      topics/priorities framework for two synchronous reactions."
+
+  - term: publish/subscribe (event)
+    chapter: 14
+    definition: >
+      The interaction style behind Observer: producers publish events to a
+      subject and consumers subscribe; neither holds a direct reference to the
+      other.
+    why_it_matters: >
+      Turns a hardcoded chain of side-effects into an open set of independent
+      reactions, each added or removed without touching the producer.
+    prompt_phrasing: >
+      "Publish an OrderPlaced event and let subscribers react; the producer
+      must not name any individual subscriber."
+    anti_phrase: >
+      "Keep it greppable — a global bus where everything publishes and
+      subscribes hides control flow. Use it only when reactions are many."
+
+  - term: State pattern
+    chapter: 14
+    definition: >
+      Let an object change its behavior when its internal state changes by
+      delegating to a state object; each state owns its behavior and its legal
+      transitions, and the context forwards to the current one.
+    why_it_matters: >
+      Replaces status-string if-ladders smeared across methods with one place
+      per state, making illegal transitions impossible rather than merely
+      guarded against.
+    prompt_phrasing: >
+      "Model this lifecycle with the State pattern: one class per state, a base
+      where transitions are illegal by default, each state overriding only its
+      legal moves."
+    anti_phrase: >
+      "Two stable states don't need a hierarchy — a boolean and a guard. For
+      label-only states, prefer enum + match / a discriminated union."
+
+  - term: explicit state machine
+    chapter: 14
+    definition: >
+      A lifecycle modeled so that states and the transitions between them are
+      first-class — as state classes, or as an enum/discriminated union plus a
+      transition function — rather than implied by scattered conditionals.
+    why_it_matters: >
+      The legal transitions become the code (and a stateDiagram its blueprint),
+      so the diagram and the implementation cannot drift apart.
+    prompt_phrasing: >
+      "Make the state machine explicit: enumerate the states and the legal
+      transitions; an illegal move raises."
+    anti_phrase: >
+      "Don't over-formalize a two-state toggle; reach for it when transitions
+      are many and the illegal ones must be impossible."
