@@ -40,18 +40,27 @@ for paired-pattern chapters, dual-language cheat sheets, `examples/chNN/{py,ts}`
 
 ## Phase 2 — Pattern chapters
 
-- [ ] Ch 11 (Adapter & Façade) — validates multi-pattern Before/After decomposition
-- [ ] Ch 10 (Factories & Singleton) — module-level value in both languages
+- [x] Ch 11 (Adapter & Façade) — `###`/`####` decomposition, dual cheat sheets — committed `4c0f46c`
+- [x] Ch 10 (Factories & Singleton) — bilingual demoted Singleton — committed `cfbd7f1`
 
 ## Phase 3 — Part II principle chapters
 
-- [ ] Ch 5 (Coupling)  ·  [ ] Ch 6 (Encapsulation)  ·  [ ] Ch 7 (Contracts)  ·  [ ] Ch 8 (Extension)
-- [ ] Ch 4 (Cohesion & SRP) — multi-module split
-- [ ] Ch 9 (Counterweights) — cathedral + exercise subdir
+- [x] Ch 5 (Coupling) `2d8fec1` · [x] Ch 6 (Encapsulation) `79331f4` · [x] Ch 7 (Contracts) `483bd59` · [x] Ch 8 (Extension) `2903846`
+- [x] Ch 4 (Cohesion & SRP) — multi-module split; first dual-language chapter (intro aside) — `e7cf982`
+- [x] Ch 9 (Counterweights) — cathedral + exercise subdir — `619b199`
+
+**Phase 3 complete.**
 
 ## Part I — Python-reference (no py/ts split)
 
-- [ ] Ch 1, 2, 3 — add a one-line reader note that dual-language begins in Part II
+- [x] Ch 1 carries the reader note ("Part I is Python; dual-language from Part II"). Ch 2, 3 unchanged (one note at the entry point suffices).
+
+## Refactor status: COMPLETE
+
+All Part II + III drafted chapters (4–11, 13) are dual-language; Part I (1–3) is
+Python-reference with the entry note. Gates per chapter: `pnpm build` ·
+`examples/chNN/py` pytest · `pnpm -C examples test chNN` · `pnpm -C examples typecheck`.
+Deferred (unchanged): examples CI; the TS-voice review (editor to revisit prose).
 
 ## Notes / decisions
 
