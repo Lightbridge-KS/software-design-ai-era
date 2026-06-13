@@ -1,4 +1,4 @@
-# Vision — *Software Design for Programmers & AI Coding Agents*
+# Vision — *Software Design for Programmers in era of Agentic Coding*
 
 > This is the north-star document. It states what the book is, who it's for, and the
 > one structural commitment that shapes everything: **the book is multi-language.**

@@ -9,7 +9,7 @@ export default defineConfig({
   },
   integrations: [
     starlight({
-      title: 'Software Design for Programmers & AI Coding Agents',
+      title: 'Software Design for Programmers in era of Agentic Coding',
       social: [
         {
           icon: 'github',

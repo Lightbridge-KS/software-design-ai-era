@@ -1,4 +1,4 @@
-# Software Design for Programmers & AI Coding Agents
+# Software Design for Programmers in era of Agentic Coding
 
 An educational book teaching software developers how to design good software in the
 AI-assisted coding era. **Thesis:** design vocabulary is a communication protocol —

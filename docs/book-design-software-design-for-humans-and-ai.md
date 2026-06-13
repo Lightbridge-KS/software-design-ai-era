@@ -1,6 +1,6 @@
 # Book Design Document
 
-## *Software Design for Programmers & AI Coding Agents*
+## *Software Design for Programmers in era of Agentic Coding*
 
 > **Working subtitle:** *A Shared Vocabulary for Building Clean, Sustainable Codebases — With Humans and AI as Partners*
 
