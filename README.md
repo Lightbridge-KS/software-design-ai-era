@@ -1,5 +1,7 @@
 # Software Design for Programmers in era of Agentic Coding
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/fc2bb3ef-c5c7-498c-8c05-c9667fbc49a8/deploy-status)](https://app.netlify.com/projects/software-design-ai-era/deploys)
+
 > A shared vocabulary for building clean, sustainable codebases — with humans and AI as partners.
 
 An educational book that teaches **codebase-level software design** for the AI-coding
